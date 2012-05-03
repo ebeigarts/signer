@@ -1,3 +1,3 @@
-module Signer
-  VERSION = "0.0.1"
+class Signer
+  VERSION = "1.0.0"
 end

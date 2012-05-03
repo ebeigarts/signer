@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope" xmlns:a="http://www.w3.org/2005/08/addressing" xmlns:u="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
+  <s:Header>
+    <a:Action s:mustUnderstand="1">http://tempuri.org/IDocumentService/SearchDocuments</a:Action>
+    <a:MessageID>urn:uuid:30db5d4f-ab84-46be-907c-be690a92979b</a:MessageID>
+    <a:ReplyTo>
+      <a:Address>http://www.w3.org/2005/08/addressing/anonymous</a:Address>
+    </a:ReplyTo>
+    <To xmlns="http://www.w3.org/2005/08/addressing" xmlns:a="http://www.w3.org/2003/05/soap-envelope" a:mustUnderstand="1">http://tempuri.org/PublicServices/Test/1.0.12/PublicServices/DocumentService.svc</To>
+    <o:Security xmlns:o="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" s:mustUnderstand="1">
+      <u:Timestamp>
+        <u:Created>2012-05-02T18:17:14.467Z</u:Created>
+        <u:Expires>2012-05-02T18:22:14.467Z</u:Expires>
+      </u:Timestamp>
+    </o:Security>
+  </s:Header>
+  <s:Body>
+    <SearchDocuments xmlns="http://tempuri.org/">
+      <searchCriteria xmlns:b="http://schemas.datacontract.org/2004/07/BusinessLogic.Data.Documents.Integration" xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+        <b:RegistrationNo>1</b:RegistrationNo>
+      </searchCriteria>
+    </SearchDocuments>
+  </s:Body>
+</s:Envelope>
