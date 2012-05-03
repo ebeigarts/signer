@@ -68,7 +68,7 @@ response = client.request(:search_documents) do
             "xmlns:o" => "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd",
             "s:mustUnderstand" => "1"
           ) do
-            xml.send("u:Timestamp", "u:Id" => "_0") do
+            xml.send("u:Timestamp") do
               time = Time.now.utc
               xml.send("u:Created") do
                 xml.text(time.xmlschema)
