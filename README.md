@@ -1,5 +1,7 @@
 # Signer
 
+[![Continuous Integration status](https://secure.travis-ci.org/ebeigarts/signer.png)](http://travis-ci.org/ebeigarts/signer)
+
 WS Security XML Certificate signing for Ruby
 
 ## Installation
