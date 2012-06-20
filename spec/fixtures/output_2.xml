@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<ApplicationRequest xmlns="http://bxd.fi/xmldata/">
+  <CustomerId>679155330</CustomerId>
+  <Command>GetUserInfo</Command>
+  <Timestamp>2010-05-10T13:22:19.847+03:00</Timestamp>
+  <Environment>PRODUCTION</Environment>
+  <SoftwareId>Petri</SoftwareId>
+  <Signature xmlns="http://www.w3.org/2000/09/xmldsig#">
+    <SignedInfo>
+      <CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+      <SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"/>
+      <Reference URI="">
+        <Transforms>
+          <Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+        </Transforms>
+        <DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
+        <DigestValue>U9tsT4lrRMp8ZdKMnblgeMCGfvI=</DigestValue>
+      </Reference>
+    </SignedInfo>
+    <SignatureValue>GoikOue0l0ZZBkEoZ+kDvFJ0YJl1nW4zFLe8IsMcqPFFE2xOK1lO/YHKpc49CNQFs2ZhOiGwCseOg0F/8FUWp9hiAOTLlYrKVd61FErifakLw/mirP2SB3J9npPh6Idt9LMQWU+O+aRdyJMF7HLpx03GML2IF9ejKVUBTWTrcpU=</SignatureValue>
+    <KeyInfo>
+      <X509Data>
+        <X509IssuerSerial>
+          <X509IssuerName>System.Security.Cryptography.X509Certificates.X500DistinguishedName</X509IssuerName>
+          <X509SerialNumber>16503368396260674861</X509SerialNumber>
+        </X509IssuerSerial>
+        <X509Certificate>MIICsDCCAhmgAwIBAgIJAOUHvh4oho0tMA0GCSqGSIb3DQEBBQUAMEUxCzAJBgNVBAYTAkFVMRMwEQYDVQQIEwpTb21lLVN0YXRlMSEwHwYDVQQKExhJbnRlcm5ldCBXaWRnaXRzIFB0eSBMdGQwHhcNMTIwNTAzMTMxODIyWhcNMTMwNTAzMTMxODIyWjBFMQswCQYDVQQGEwJBVTETMBEGA1UECBMKU29tZS1TdGF0ZTEhMB8GA1UEChMYSW50ZXJuZXQgV2lkZ2l0cyBQdHkgTHRkMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCvK5hMPv/R5IFmwWyJOyEaFUrF/ZsmN+Gip8hvR6rLP3YPNx9iFYvPcZllFmuVwyaz7YT2N5BsqTwLdyi5v4HY4fUtuz0p8jIPoSd6dfDvcnSpf4QLTOgOaL3ciPEbgDHH2tnIksukoWzqCYva+qFZ74NFl19swXotW9fA4Jzs4QIDAQABo4GnMIGkMB0GA1UdDgQWBBRU1WEHDnP8Hr7ZulxrSzEwOcYpMzB1BgNVHSMEbjBsgBRU1WEHDnP8Hr7ZulxrSzEwOcYpM6FJpEcwRTELMAkGA1UEBhMCQVUxEzARBgNVBAgTClNvbWUtU3RhdGUxITAfBgNVBAoTGEludGVybmV0IFdpZGdpdHMgUHR5IEx0ZIIJAOUHvh4oho0tMAwGA1UdEwQFMAMBAf8wDQYJKoZIhvcNAQEFBQADgYEASY/9SAOK57q9mGnNJJeyDbmyGrAHSJTod646xTHYkMvhUqwHyk9PTr5bdfmswpmyVn+AQ43U2tU5vnpTBmKpHWD2+HSHgGa92mMLrfBOd8EBZ329NL3N2HDPIaHr4NPGyhNrSK3QVOnAq2D0jlyrGYJlLli1NxHiBz7FCEJaVI8=</X509Certificate>
+      </X509Data>
+    </KeyInfo>
+  </Signature>
+</ApplicationRequest>

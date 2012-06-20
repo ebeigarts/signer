@@ -27,7 +27,7 @@ signer.document.xpath("//a:To", { "a" => "http://www.w3.org/2005/08/addressing" 
   signer.digest!(node)
 end
 
-signer.sign!
+signer.sign!(:security_token => true)
 
 signer.to_xml
 ```
