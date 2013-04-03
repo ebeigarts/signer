@@ -11,13 +11,13 @@
       <SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"/>
       <Reference URI="">
         <Transforms>
-          <Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+          <Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/>
         </Transforms>
         <DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
         <DigestValue>U9tsT4lrRMp8ZdKMnblgeMCGfvI=</DigestValue>
       </Reference>
     </SignedInfo>
-    <SignatureValue>GoikOue0l0ZZBkEoZ+kDvFJ0YJl1nW4zFLe8IsMcqPFFE2xOK1lO/YHKpc49CNQFs2ZhOiGwCseOg0F/8FUWp9hiAOTLlYrKVd61FErifakLw/mirP2SB3J9npPh6Idt9LMQWU+O+aRdyJMF7HLpx03GML2IF9ejKVUBTWTrcpU=</SignatureValue>
+    <SignatureValue>HpRIiW6/yGyAI0AwVaaGp3PltD3JOCFfxZLVt+kQD05u1tz9EA91/5CbvCNfn1ljoObMSGe3+W9gXFZewCXANu5VXMnt+FeZ42QYNuYj2oUCFaWlg3NcThWnehE1W/R+QPLJVgk4RxpSntNLK0WWtFy79JbAh0NO4CcD84/HEo8=</SignatureValue>
     <KeyInfo>
       <X509Data>
         <X509IssuerSerial>

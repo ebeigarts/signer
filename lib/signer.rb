@@ -148,7 +148,11 @@ class Signer
     reference_node.add_child(transforms_node)
 
     transform_node = Nokogiri::XML::Node.new('Transform', document)
-    transform_node['Algorithm'] = 'http://www.w3.org/2001/10/xml-exc-c14n#'
+    if options[:enveloped]
+      transform_node['Algorithm'] = 'http://www.w3.org/2000/09/xmldsig#enveloped-signature'
+    else
+      transform_node['Algorithm'] = 'http://www.w3.org/2001/10/xml-exc-c14n#'
+    end
     transforms_node.add_child(transform_node)
 
     digest_method_node = Nokogiri::XML::Node.new('DigestMethod', document)

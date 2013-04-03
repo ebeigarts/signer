@@ -38,7 +38,7 @@ describe Signer do
     signer.private_key = OpenSSL::PKey::RSA.new(File.read(private_key_file), "test")
     signer.security_node = signer.document.root
     signer.security_token_id = ""
-    signer.digest!(signer.document, :id => "")
+    signer.digest!(signer.document, :id => "", :enveloped => true)
     signer.sign!(:issuer_serial => true)
 
     # File.open(File.join(File.dirname(__FILE__), 'fixtures', 'output_2.xml'), "w") do |f|
