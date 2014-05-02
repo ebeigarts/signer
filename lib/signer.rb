@@ -138,9 +138,11 @@ class Signer
   #   <DigestValue>aeqXriJuUCk4tPNPAGDXGqHj6ao=</DigestValue>
   # </Reference>
   def digest!(target_node, options = {})
-    id = options[:id] || "_#{Digest::SHA1.hexdigest(target_node.to_s)}"
+    wsu_ns = namespace_prefix(target_node, WSU_NAMESPACE)
+    current_id = target_node["#{wsu_ns}:Id"]  if wsu_ns
+    id = options[:id] || current_id || "_#{Digest::SHA1.hexdigest(target_node.to_s)}"
     if id.to_s.size > 0
-      wsu_ns = namespace_prefix(target_node, WSU_NAMESPACE, 'wsu')
+      wsu_ns ||= namespace_prefix(target_node, WSU_NAMESPACE, 'wsu')
       target_node["#{wsu_ns}:Id"] = id.to_s
     end
     target_canon = canonicalize(target_node)
@@ -198,13 +200,14 @@ class Signer
   # Searches in namespaces, defined on +target_node+ or its ancestors,
   # for the +namespace+ with given URI and returns its prefix.
   #
-  # If there is no such namespace adds it to +target_node+ with +desired_prefix+
+  # If there is no such namespace and +desired_prefix+ is specified,
+  # adds such a namespace to +target_node+ with +desired_prefix+
 
-  def namespace_prefix(target_node, namespace, desired_prefix)
+  def namespace_prefix(target_node, namespace, desired_prefix = nil)
     ns = target_node.namespaces.key(namespace)
     if ns
       ns.match(/(?:xmlns:)?(.*)/) && $1
-    else
+    elsif desired_prefix
       target_node.add_namespace_definition(desired_prefix, namespace)
       desired_prefix
     end
