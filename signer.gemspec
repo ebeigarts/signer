@@ -8,7 +8,7 @@ Gem::Specification.new do |gem|
   gem.summary       = gem.description
   gem.homepage      = ""
 
-  gem.files         = Dir.glob("lib/**/*") + %w(README.md LICENSE)
+  gem.files         = Dir.glob("lib/**/*") + %w(README.md CHANGELOG.md LICENSE)
   gem.test_files    = Dir.glob("spec/**/*")
   gem.executables   = []
 
