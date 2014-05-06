@@ -199,3 +199,12 @@ Output:
   </s:Body>
 </s:Envelope>
 ```
+
+## Miscellaneous
+
+If you need to digest a `BinarySecurityToken` tag, you need to construct it yourself **before** signing.
+
+```ruby
+signer.digest!(signer.binary_security_token_node) # Constructing tag and digesting it
+signer.sign! # No need to pass a :security_token option, as we already constructed and inserted this node
+```

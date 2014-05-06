@@ -1,7 +1,7 @@
 require "spec_helper"
 
 describe Signer do
-  it "should digest and sign SOAP XML with security node and binary token" do
+  it "should digest and sign SOAP XML with security node and digested binary token" do
     input_xml_file   = File.join(File.dirname(__FILE__), 'fixtures', 'input_1.xml')
     cert_file        = File.join(File.dirname(__FILE__), 'fixtures', 'cert.pem')
     private_key_file = File.join(File.dirname(__FILE__), 'fixtures', 'key.pem')
@@ -18,7 +18,9 @@ describe Signer do
       signer.digest!(node)
     end
 
-    signer.sign!(:security_token => true)
+    signer.digest!(signer.binary_security_token_node)
+
+    signer.sign!
 
     # File.open(File.join(File.dirname(__FILE__), 'fixtures', 'output_1.xml'), "w") do |f|
     #   f.write signer.document.to_s
@@ -38,7 +40,7 @@ describe Signer do
     signer.private_key = OpenSSL::PKey::RSA.new(File.read(private_key_file), "test")
     signer.security_node = signer.document.root
     signer.security_token_id = ""
-    signer.digest!(signer.document, :id => "", :enveloped => true)
+    signer.digest!(signer.document.root, :id => "", :enveloped => true)
     signer.sign!(:issuer_serial => true)
 
     # File.open(File.join(File.dirname(__FILE__), 'fixtures', 'output_2.xml'), "w") do |f|

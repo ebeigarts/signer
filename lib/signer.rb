@@ -9,6 +9,8 @@ class Signer
   attr_accessor :document, :cert, :private_key
   attr_writer :security_node, :security_token_id
 
+  WSU_NAMESPACE = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd'
+
   def initialize(document)
     self.document = Nokogiri::XML(document.to_s, &:noblanks)
   end
@@ -75,11 +77,12 @@ class Signer
     node = document.xpath("//o:BinarySecurityToken", "o" => "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd").first
     unless node
       node = Nokogiri::XML::Node.new('BinarySecurityToken', document)
-      node['u:Id']         = security_token_id
       node['ValueType']    = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-x509-token-profile-1.0#X509v3'
       node['EncodingType'] = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary'
       node.content = Base64.encode64(cert.to_der).gsub("\n", '')
       signature_node.add_previous_sibling(node)
+      wsu_ns = namespace_prefix(node, WSU_NAMESPACE, 'wsu')
+      node["#{wsu_ns}:Id"] = security_token_id
       key_info_node = Nokogiri::XML::Node.new('KeyInfo', document)
       security_token_reference_node = Nokogiri::XML::Node.new('o:SecurityTokenReference', document)
       key_info_node.add_child(security_token_reference_node)
@@ -135,13 +138,18 @@ class Signer
   #   <DigestValue>aeqXriJuUCk4tPNPAGDXGqHj6ao=</DigestValue>
   # </Reference>
   def digest!(target_node, options = {})
-    id = options[:id] || "_#{Digest::SHA1.hexdigest(target_node.to_s)}"
-    target_node['u:Id'] = id if id.size > 0
+    wsu_ns = namespace_prefix(target_node, WSU_NAMESPACE)
+    current_id = target_node["#{wsu_ns}:Id"]  if wsu_ns
+    id = options[:id] || current_id || "_#{Digest::SHA1.hexdigest(target_node.to_s)}"
+    if id.to_s.size > 0
+      wsu_ns ||= namespace_prefix(target_node, WSU_NAMESPACE, 'wsu')
+      target_node["#{wsu_ns}:Id"] = id.to_s
+    end
     target_canon = canonicalize(target_node)
     target_digest = Base64.encode64(OpenSSL::Digest::SHA1.digest(target_canon)).strip
 
     reference_node = Nokogiri::XML::Node.new('Reference', document)
-    reference_node['URI'] = id.size > 0 ? "##{id}" : ""
+    reference_node['URI'] = id.to_s.size > 0 ? "##{id}" : ""
     signed_info_node.add_child(reference_node)
 
     transforms_node = Nokogiri::XML::Node.new('Transforms', document)
@@ -185,4 +193,24 @@ class Signer
     signed_info_node.add_next_sibling(signature_value_node)
     self
   end
+
+  protected
+
+  ##
+  # Searches in namespaces, defined on +target_node+ or its ancestors,
+  # for the +namespace+ with given URI and returns its prefix.
+  #
+  # If there is no such namespace and +desired_prefix+ is specified,
+  # adds such a namespace to +target_node+ with +desired_prefix+
+
+  def namespace_prefix(target_node, namespace, desired_prefix = nil)
+    ns = target_node.namespaces.key(namespace)
+    if ns
+      ns.match(/(?:xmlns:)?(.*)/) && $1
+    elsif desired_prefix
+      target_node.add_namespace_definition(desired_prefix, namespace)
+      desired_prefix
+    end
+  end
+
 end
