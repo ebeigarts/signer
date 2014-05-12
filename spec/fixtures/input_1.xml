@@ -17,6 +17,7 @@
   <s:Body>
     <SearchDocuments xmlns="http://tempuri.org/">
       <searchCriteria xmlns:b="http://schemas.datacontract.org/2004/07/BusinessLogic.Data.Documents.Integration" xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+        <!-- This comment shouldn't be accounted when digesting -->
         <b:RegistrationNo>1</b:RegistrationNo>
       </searchCriteria>
     </SearchDocuments>

@@ -20,6 +20,8 @@ describe Signer do
 
     signer.digest!(signer.binary_security_token_node)
 
+    signer.digest!(signer.document.at_xpath('//soap:Body', { 'soap' => 'http://www.w3.org/2003/05/soap-envelope'}))
+
     signer.sign!
 
     # File.open(File.join(File.dirname(__FILE__), 'fixtures', 'output_1.xml'), "w") do |f|
