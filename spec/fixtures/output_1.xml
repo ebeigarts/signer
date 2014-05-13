@@ -38,15 +38,8 @@
               <DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
               <DigestValue>3UQ13wcqsZOqwueVE7DfSmTGQ9c=</DigestValue>
           </Reference>
-          <Reference URI="#_0a595d505192b7525d46ab20a4773ea0b3191d23">
-            <Transforms>
-              <Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
-            </Transforms>
-            <DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
-            <DigestValue>Pe9mMs3hjPi10puwjphEn+VzmV8=</DigestValue>
-          </Reference>
         </SignedInfo>
-        <SignatureValue>l88yAfUHBuiG7rqok+YQ6FI+RiF0A6/jRT3wqaLU/nuPXCZhJo9+nNh20gaJJmSIBSKb+n6uUD/vu4psUuaFMyHHk3zKyNZ9PlFeNf5zkVnkbdt90AiQW5b65uT1eVohzhRrqc4CvSsEpqxL8pUU5nsmedQZphBE12U6r08Zn3I=</SignatureValue>
+        <SignatureValue>BB0CHnd4qA8AVSj/xXrfK29Xa1aCmA9K+X4Bkvc2IsLOmfprXTrSHSb0maEKkFHFCLKH+DEIgCWtDC4rkyiXR5i8iKKZGggoMfD/2Wmw3TcARiQ2pyGrZA04NXTPWHo17nYwBQDhfhafeIKE4zFRXltyW/I/RRO678E3Fd1Ma0Y=</SignatureValue>
         <KeyInfo>
           <o:SecurityTokenReference>
             <o:Reference ValueType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-x509-token-profile-1.0#X509v3" URI="#uuid-639b8970-7644-4f9e-9bc4-9c2e367808fc-1"/>
@@ -55,10 +48,9 @@
       </Signature>
     </o:Security>
   </s:Header>
-  <s:Body wsurandom:Id="_0a595d505192b7525d46ab20a4773ea0b3191d23">
+  <s:Body>
     <SearchDocuments xmlns="http://tempuri.org/">
       <searchCriteria xmlns:b="http://schemas.datacontract.org/2004/07/BusinessLogic.Data.Documents.Integration" xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
-        <!-- This comment shouldn't be accounted when digesting -->
         <b:RegistrationNo>1</b:RegistrationNo>
       </searchCriteria>
     </SearchDocuments>
