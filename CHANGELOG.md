@@ -1,3 +1,7 @@
+## 1.2.1 (2014-05-14)
+
+- Fix canonicalization: should be without comments (#2, @Envek)
+
 ## 1.2.0 (2014-05-06)
 
 - Id and attribute namespace preserving when digesting the nodes (#1, @Envek)
