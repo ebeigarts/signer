@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope" xmlns:a="http://www.w3.org/2005/08/addressing"
+            xmlns:u="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
+  <s:Header>
+    <a:Action s:mustUnderstand="1">http://tempuri.org/IDocumentService/SearchDocuments</a:Action>
+    <a:MessageID>urn:uuid:30db5d4f-ab84-46be-907c-be690a92979b</a:MessageID>
+    <To xmlns="http://www.w3.org/2005/08/addressing" xmlns:a="http://www.w3.org/2003/05/soap-envelope" a:mustUnderstand="1">http://tempuri.org/PublicServices/Test/1.0.12/PublicServices/DocumentService.svc</To>
+    <o:Security xmlns:o="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"
+                s:mustUnderstand="1">
+      <u:Timestamp>
+        <u:Created>2012-05-02T18:17:14.467Z</u:Created>
+        <u:Expires>2012-05-02T18:22:14.467Z</u:Expires>
+      </u:Timestamp>
+      <Signature xmlns="http://www.w3.org/2000/09/xmldsig#">
+        <SignedInfo>
+          <CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+          <SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"/>
+          <Reference URI="#_f7a662fdba7cdb44426d7447f06adf0f11707eeb">
+            <Transforms>
+              <Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+            </Transforms>
+            <DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
+            <DigestValue>iqiXdxdsix9HMz4rEBEo/sYazDU=</DigestValue>
+          </Reference>
+        </SignedInfo>
+        <SignatureValue>XOMmCzcg7Un+BpWIP5WpAAeT1Sq2B+WZ8eM4MiDR1bhIFV8aPScAXX/cB3Esa88JcBltsiBlZTdq1hCQ8GKrLEvWTFMhkSCQrkAR+3eCUR894UzPrWTr0jYA7RZaVaw+XODf7ICbYIhLs7n50cPyFrslKVOjh6EKlCq1ZV5XFYE=</SignatureValue>
+      </Signature>
+    </o:Security>
+  </s:Header>
+  <s:Body u:Id="_f7a662fdba7cdb44426d7447f06adf0f11707eeb">
+    <SearchDocuments xmlns="http://tempuri.org/">
+      <searchCriteria xmlns:b="http://schemas.datacontract.org/2004/07/BusinessLogic.Data.Documents.Integration" xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+        <!-- This comment shouldn't affect digest value for digested node -->
+        <b:RegistrationNo>1</b:RegistrationNo>
+      </searchCriteria>
+    </SearchDocuments>
+  </s:Body>
+</s:Envelope>

@@ -28,7 +28,7 @@ class Signer
   end
 
   def canonicalize(node = document)
-    node.canonicalize(Nokogiri::XML::XML_C14N_EXCLUSIVE_1_0)
+    node.canonicalize(Nokogiri::XML::XML_C14N_EXCLUSIVE_1_0, nil, nil) # The last argument should be exactly +nil+ to remove comments from result
   end
 
   # <Signature xmlns="http://www.w3.org/2000/09/xmldsig#">

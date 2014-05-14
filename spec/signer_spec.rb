@@ -30,6 +30,23 @@ describe Signer do
     signer.to_xml.should == Nokogiri::XML(File.read(output_xml_file), &:noblanks).to_xml(:save_with => 0)
   end
 
+  it "should correctly canonicalize digested nodes (shouldn't account comments)" do
+    input_xml_file   = File.join(File.dirname(__FILE__), 'fixtures', 'input_3_c14n_comments.xml')
+    cert_file        = File.join(File.dirname(__FILE__), 'fixtures', 'cert.pem')
+    private_key_file = File.join(File.dirname(__FILE__), 'fixtures', 'key.pem')
+
+    signer = Signer.new(File.read(input_xml_file))
+    signer.cert = OpenSSL::X509::Certificate.new(File.read(cert_file))
+    signer.private_key = OpenSSL::PKey::RSA.new(File.read(private_key_file), "test")
+
+    signer.digest!(signer.document.at_xpath('//soap:Body', { 'soap' => 'http://www.w3.org/2003/05/soap-envelope'}))
+    signer.sign!
+
+    output_xml_file = File.join(File.dirname(__FILE__), 'fixtures', 'output_3_c14n_comments.xml')
+
+    signer.to_xml.should == Nokogiri::XML(File.read(output_xml_file), &:noblanks).to_xml(:save_with => 0)
+  end
+
   it "should sign simple XML" do
     input_xml_file   = File.join(File.dirname(__FILE__), 'fixtures', 'input_2.xml')
     cert_file        = File.join(File.dirname(__FILE__), 'fixtures', 'cert.pem')
