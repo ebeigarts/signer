@@ -56,8 +56,8 @@ describe Signer do
     signer.cert = OpenSSL::X509::Certificate.new(File.read(cert_file))
     signer.private_key = OpenSSL::PKey::RSA.new(File.read(private_key_file), "test")
     signer.digest_algorithm = :sha256
-    signer.sign_digest_algorithm = :sha256
-    signer.signature_id = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256'
+    signer.signature_digest_algorithm = :sha256
+    signer.signature_algorithm_id = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256'
 
     signer.digest!(signer.binary_security_token_node)
 

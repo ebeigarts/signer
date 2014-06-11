@@ -60,12 +60,12 @@ class Signer
     end
 
     # Human-friendly name
-    def name
+    def digest_name
       @digest_info[:name]
     end
 
     # XML-friendly name (for specifying in XML +DigestMethod+ node +Algorithm+ attribute)
-    def id
+    def digest_id
       @digest_info[:id]
     end
 
