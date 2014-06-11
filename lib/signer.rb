@@ -3,20 +3,63 @@ require "base64"
 require "digest/sha1"
 require "openssl"
 
+require "signer/digester"
 require "signer/version"
 
 class Signer
-  attr_accessor :document, :cert, :private_key
+  attr_accessor :document, :private_key, :signature_id
+  attr_reader :cert
   attr_writer :security_node, :security_token_id
 
   WSU_NAMESPACE = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd'
 
   def initialize(document)
     self.document = Nokogiri::XML(document.to_s, &:noblanks)
+    self.digest_algorithm = :sha1
+    self.sign_digest_algorithm = :sha1
+    self.signature_id ||= 'http://www.w3.org/2000/09/xmldsig#rsa-sha1'
   end
 
   def to_xml
     document.to_xml(:save_with => 0)
+  end
+
+  # Return symbol name for supported digest algorithms and string name for custom ones.
+  def digest_algorithm
+    @digest.symbol || @sign_digest.name
+  end
+
+  # Allows to change algorithm for node digesting (default is SHA1).
+  #
+  # You may pass either a one of +:sha1+, +:sha256+ or +:gostr3411+ symbols
+  # or +Hash+ with keys +:id+ with a string, which will denote algorithm in XML Reference tag
+  # and +:digester+ with instance of class with interface compatible with +OpenSSL::Digest+ class.
+  def digest_algorithm=(algorithm)
+    @digest = Signer::Digester.new(algorithm)
+  end
+
+  # Return symbol name for supported digest algorithms and string name for custom ones.
+  def sign_digest_algorithm
+    @sign_digest.symbol || @sign_digest.name
+  end
+
+  # Allows to change digesting algorithm for signature creation. Same as +digest_algorithm=+
+  def sign_digest_algorithm=(algorithm)
+    @sign_digest = Signer::Digester.new(algorithm)
+  end
+
+  # Receives certificate for signing and tries to guess a digest algorithm for signature creation
+  def cert=(certificate)
+    @cert = certificate
+    # Try to guess a digest algorithm for signature creation
+    case @cert.signature_algorithm
+      when 'GOST R 34.11-94 with GOST R 34.10-2001'
+        self.sign_digest_algorithm = :gostr3411
+        self.signature_id = 'http://www.w3.org/2001/04/xmldsig-more#gostr34102001-gostr3411'
+      else
+        self.sign_digest_algorithm ||= :sha1
+        self.signature_id ||= 'http://www.w3.org/2000/09/xmldsig#rsa-sha1'
+    end
   end
 
   def security_token_id
@@ -56,7 +99,7 @@ class Signer
       canonicalization_method_node['Algorithm'] = 'http://www.w3.org/2001/10/xml-exc-c14n#'
       node.add_child(canonicalization_method_node)
       signature_method_node = Nokogiri::XML::Node.new('SignatureMethod', document)
-      signature_method_node['Algorithm'] = 'http://www.w3.org/2000/09/xmldsig#rsa-sha1'
+      signature_method_node['Algorithm'] = self.signature_id
       node.add_child(signature_method_node)
     end
     node
@@ -146,7 +189,7 @@ class Signer
       target_node["#{wsu_ns}:Id"] = id.to_s
     end
     target_canon = canonicalize(target_node)
-    target_digest = Base64.encode64(OpenSSL::Digest::SHA1.digest(target_canon)).strip
+    target_digest = Base64.encode64(@digest.(target_canon)).strip
 
     reference_node = Nokogiri::XML::Node.new('Reference', document)
     reference_node['URI'] = id.to_s.size > 0 ? "##{id}" : ""
@@ -164,7 +207,7 @@ class Signer
     transforms_node.add_child(transform_node)
 
     digest_method_node = Nokogiri::XML::Node.new('DigestMethod', document)
-    digest_method_node['Algorithm'] = 'http://www.w3.org/2000/09/xmldsig#sha1'
+    digest_method_node['Algorithm'] = @digest.id
     reference_node.add_child(digest_method_node)
 
     digest_value_node = Nokogiri::XML::Node.new('DigestValue', document)
@@ -185,7 +228,7 @@ class Signer
 
     signed_info_canon = canonicalize(signed_info_node)
 
-    signature = private_key.sign(OpenSSL::Digest::SHA1.new, signed_info_canon)
+    signature = private_key.sign(@sign_digest.digester, signed_info_canon)
     signature_value_digest = Base64.encode64(signature).gsub("\n", '')
 
     signature_value_node = Nokogiri::XML::Node.new('SignatureValue', document)

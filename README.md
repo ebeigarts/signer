@@ -200,6 +200,21 @@ Output:
 </s:Envelope>
 ```
 
+## Different signature and digest algorithms support
+
+You can change digest algorithms used for both node digesting and signing. Default for both is SHA1. Currently __SHA1__ `:sha1`, __SHA256__ `:sha256`, and __GOST R 34.11-94__ `:gostr3411` are supported out of the box.
+
+```ruby
+signer.digest_algorithm      = :sha256 # Set algorithm for node digesting
+signer.sign_digest_algorithm = :sha256 # Set algorithm for message digesting for signing
+```
+
+You can provide you own digest support by passing in these methods a `Hash` with `:id` and `:digester` keys. In `:id` should be a string for XML `//Reference/DigestMethod[Algorithm]`, in `:digester` should be a Ruby object, compatible by interface with `OpenSSL::Digest` class, at least it should respond to `digest` and `reset` methods.
+
+Signature algorithm is dependent from keypair used for signing and can't be changed. Usually it's __RSA__. Currently gem recognizes __GOST R 34.10-2001__ certificates and sets up a XML identifier for it. If used signature algorithm and signature digest doesn't corresponds with XML identifier, you can change identifier with `signature_id` method.
+
+__NOTE__: To sign XMLs with __GOST R 34.10-2001__, you need to have Ruby compiled with patches from https://bugs.ruby-lang.org/issues/9830 and correctly configured OpenSSL (see https://github.com/openssl/openssl/blob/master/engines/ccgost/README.gost)
+
 ## Miscellaneous
 
 If you need to digest a `BinarySecurityToken` tag, you need to construct it yourself **before** signing.
