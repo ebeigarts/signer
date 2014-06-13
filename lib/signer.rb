@@ -16,8 +16,7 @@ class Signer
   def initialize(document)
     self.document = Nokogiri::XML(document.to_s, &:noblanks)
     self.digest_algorithm = :sha1
-    self.signature_digest_algorithm = :sha1
-    self.signature_algorithm_id = 'http://www.w3.org/2000/09/xmldsig#rsa-sha1'
+    self.set_default_signature_method!
   end
 
   def to_xml
@@ -60,9 +59,7 @@ class Signer
         self.signature_algorithm_id = 'http://www.w3.org/2001/04/xmldsig-more#gostr34102001-gostr3411'
       # Add clauses for other types of keys that require other digest algorithms and identifiers
       else # most common 'sha1WithRSAEncryption' type included here
-        # Reset any changes
-        self.signature_digest_algorithm = :sha1
-        self.signature_algorithm_id = 'http://www.w3.org/2000/09/xmldsig#rsa-sha1'
+        self.set_default_signature_method! # Reset any changes as they can become malformed
     end
   end
 
@@ -242,6 +239,12 @@ class Signer
   end
 
   protected
+
+  # Reset digest algorithm for signature creation and signature algorithm identifier
+  def set_default_signature_method!
+    self.signature_digest_algorithm = :sha1
+    self.signature_algorithm_id = 'http://www.w3.org/2000/09/xmldsig#rsa-sha1'
+  end
 
   ##
   # Searches in namespaces, defined on +target_node+ or its ancestors,
