@@ -1,3 +1,7 @@
+## 1.3.0 (2014-06-16)
+
+- Allow to sign with other digest algorithms - SHA1, SHA256, and GOST R 34.11-94 (#3, @Envek)
+
 ## 1.2.1 (2014-05-14)
 
 - Fix canonicalization: should be without comments (#2, @Envek)
