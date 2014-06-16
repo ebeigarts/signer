@@ -47,6 +47,27 @@ describe Signer do
     signer.to_xml.should == Nokogiri::XML(File.read(output_xml_file), &:noblanks).to_xml(:save_with => 0)
   end
 
+  it "should digest and sign SOAP XML with SHA256" do
+    input_xml_file   = File.join(File.dirname(__FILE__), 'fixtures', 'input_1.xml')
+    cert_file        = File.join(File.dirname(__FILE__), 'fixtures', 'cert.pem')
+    private_key_file = File.join(File.dirname(__FILE__), 'fixtures', 'key.pem')
+
+    signer = Signer.new(File.read(input_xml_file))
+    signer.cert = OpenSSL::X509::Certificate.new(File.read(cert_file))
+    signer.private_key = OpenSSL::PKey::RSA.new(File.read(private_key_file), "test")
+    signer.digest_algorithm = :sha256
+    signer.signature_digest_algorithm = :sha256
+    signer.signature_algorithm_id = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256'
+
+    signer.digest!(signer.binary_security_token_node)
+
+    signer.sign!
+
+    output_xml_file = File.join(File.dirname(__FILE__), 'fixtures', 'output_1_sha256.xml')
+
+    signer.to_xml.should == Nokogiri::XML(File.read(output_xml_file), &:noblanks).to_xml(:save_with => 0)
+  end
+
   it "should sign simple XML" do
     input_xml_file   = File.join(File.dirname(__FILE__), 'fixtures', 'input_2.xml')
     cert_file        = File.join(File.dirname(__FILE__), 'fixtures', 'cert.pem')
