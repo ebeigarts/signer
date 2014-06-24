@@ -1,3 +1,7 @@
+## 1.4.0 (2014-06-24)
+
+- Support signing and digesting with inclusive namespaces (#5, @Envek)
+
 ## 1.3.1 (2014-06-24)
 
 - Fix namespace issue for SecurityTokenReference tag (#4, #@Envek)
