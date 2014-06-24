@@ -1,3 +1,7 @@
+## 1.3.1 (2014-06-24)
+
+- Fix namespace issue for SecurityTokenReference tag (#4, #@Envek)
+
 ## 1.3.0 (2014-06-16)
 
 - Allow to sign with other digest algorithms - SHA1, SHA256, and GOST R 34.11-94 (#3, @Envek)
