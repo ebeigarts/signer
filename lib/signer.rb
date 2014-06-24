@@ -12,6 +12,7 @@ class Signer
   attr_writer :security_node, :security_token_id
 
   WSU_NAMESPACE = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd'
+  WSSE_NAMESPACE = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd'
 
   def initialize(document)
     self.document = Nokogiri::XML(document.to_s, &:noblanks)
@@ -68,7 +69,7 @@ class Signer
   end
 
   def security_node
-    @security_node ||= document.xpath("//o:Security", "o" => "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd").first
+    @security_node ||= document.xpath('//wsse:Security', wsse: WSSE_NAMESPACE).first
   end
 
   def canonicalize(node = document)
@@ -118,19 +119,20 @@ class Signer
   #   </o:SecurityTokenReference>
   # </KeyInfo>
   def binary_security_token_node
-    node = document.xpath("//o:BinarySecurityToken", "o" => "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd").first
+    node = document.xpath('//wsse:BinarySecurityToken', wsse: WSSE_NAMESPACE).first
     unless node
       node = Nokogiri::XML::Node.new('BinarySecurityToken', document)
       node['ValueType']    = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-x509-token-profile-1.0#X509v3'
       node['EncodingType'] = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary'
       node.content = Base64.encode64(cert.to_der).gsub("\n", '')
       signature_node.add_previous_sibling(node)
+      wsse_ns = namespace_prefix(node, WSSE_NAMESPACE, 'wsse')
       wsu_ns = namespace_prefix(node, WSU_NAMESPACE, 'wsu')
       node["#{wsu_ns}:Id"] = security_token_id
       key_info_node = Nokogiri::XML::Node.new('KeyInfo', document)
-      security_token_reference_node = Nokogiri::XML::Node.new('o:SecurityTokenReference', document)
+      security_token_reference_node = Nokogiri::XML::Node.new("#{wsse_ns}:SecurityTokenReference", document)
       key_info_node.add_child(security_token_reference_node)
-      reference_node = Nokogiri::XML::Node.new('o:Reference', document)
+      reference_node = Nokogiri::XML::Node.new("#{wsse_ns}:Reference", document)
       reference_node['ValueType'] = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-x509-token-profile-1.0#X509v3'
       reference_node['URI'] = "##{security_token_id}"
       security_token_reference_node.add_child(reference_node)

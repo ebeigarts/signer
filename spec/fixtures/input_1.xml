@@ -7,12 +7,12 @@
       <a:Address>http://www.w3.org/2005/08/addressing/anonymous</a:Address>
     </a:ReplyTo>
     <To xmlns="http://www.w3.org/2005/08/addressing" xmlns:a="http://www.w3.org/2003/05/soap-envelope" a:mustUnderstand="1">http://tempuri.org/PublicServices/Test/1.0.12/PublicServices/DocumentService.svc</To>
-    <o:Security xmlns:o="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" s:mustUnderstand="1">
+    <wsse:Security xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" s:mustUnderstand="1">
       <wsurandom:Timestamp>
         <wsurandom:Created>2012-05-02T18:17:14.467Z</wsurandom:Created>
         <wsurandom:Expires>2012-05-02T18:22:14.467Z</wsurandom:Expires>
       </wsurandom:Timestamp>
-    </o:Security>
+    </wsse:Security>
   </s:Header>
   <s:Body>
     <SearchDocuments xmlns="http://tempuri.org/">
