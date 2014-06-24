@@ -225,3 +225,5 @@ If you need to digest a `BinarySecurityToken` tag, you need to construct it your
 signer.digest!(signer.binary_security_token_node) # Constructing tag and digesting it
 signer.sign! # No need to pass a :security_token option, as we already constructed and inserted this node
 ```
+
+If you need to use canonicalization with inclusive namespaces you can pass array of namespace prefixes in `:inclusive_namespaces` option in both `digest!` and `sign!` methods.

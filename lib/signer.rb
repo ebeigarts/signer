@@ -72,8 +72,8 @@ class Signer
     @security_node ||= document.xpath('//wsse:Security', wsse: WSSE_NAMESPACE).first
   end
 
-  def canonicalize(node = document)
-    node.canonicalize(Nokogiri::XML::XML_C14N_EXCLUSIVE_1_0, nil, nil) # The last argument should be exactly +nil+ to remove comments from result
+  def canonicalize(node = document, inclusive_namespaces=nil)
+    node.canonicalize(Nokogiri::XML::XML_C14N_EXCLUSIVE_1_0, inclusive_namespaces, nil) # The last argument should be exactly +nil+ to remove comments from result
   end
 
   # <Signature xmlns="http://www.w3.org/2000/09/xmldsig#">
@@ -176,13 +176,27 @@ class Signer
     data_node
   end
 
-  # <Reference URI="#_0">
-  #   <Transforms>
-  #     <Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
-  #   </Transforms>
-  #   <DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
-  #   <DigestValue>aeqXriJuUCk4tPNPAGDXGqHj6ao=</DigestValue>
-  # </Reference>
+  ##
+  # Digests some +target_node+, which integrity you wish to track. Any changes in digested node will invalidate signed message.
+  # All digest should be calculated **before** signing.
+  #
+  # Available options:
+  # * [+:id+]                   Id for the node, if you don't want to use automatically calculated one
+  # * [+:inclusive_namespaces+] Array of namespace prefixes which definitions should be added to node during canonicalization
+  # * [+:enveloped+]
+  #
+  # Example of XML that will be inserted in message for call like <tt>digest!(node, inclusive_namespaces: ['soap'])</tt>:
+  #
+  #   <Reference URI="#_0">
+  #     <Transforms>
+  #       <Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#">
+  #         <ec:InclusiveNamespaces xmlns:ec="http://www.w3.org/2001/10/xml-exc-c14n#" PrefixList="soap" />
+  #       </Transform>
+  #     </Transforms>
+  #     <DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
+  #     <DigestValue>aeqXriJuUCk4tPNPAGDXGqHj6ao=</DigestValue>
+  #   </Reference>
+
   def digest!(target_node, options = {})
     wsu_ns = namespace_prefix(target_node, WSU_NAMESPACE)
     current_id = target_node["#{wsu_ns}:Id"]  if wsu_ns
@@ -191,7 +205,7 @@ class Signer
       wsu_ns ||= namespace_prefix(target_node, WSU_NAMESPACE, 'wsu')
       target_node["#{wsu_ns}:Id"] = id.to_s
     end
-    target_canon = canonicalize(target_node)
+    target_canon = canonicalize(target_node, options[:inclusive_namespaces])
     target_digest = Base64.encode64(@digester.digest(target_canon)).strip
 
     reference_node = Nokogiri::XML::Node.new('Reference', document)
@@ -207,6 +221,12 @@ class Signer
     else
       transform_node['Algorithm'] = 'http://www.w3.org/2001/10/xml-exc-c14n#'
     end
+    if options[:inclusive_namespaces]
+      inclusive_namespaces_node = Nokogiri::XML::Node.new('ec:InclusiveNamespaces', document)
+      inclusive_namespaces_node.add_namespace_definition('ec', transform_node['Algorithm'])
+      inclusive_namespaces_node['PrefixList'] = options[:inclusive_namespaces].join(' ')
+      transform_node.add_child(inclusive_namespaces_node)
+    end
     transforms_node.add_child(transform_node)
 
     digest_method_node = Nokogiri::XML::Node.new('DigestMethod', document)
@@ -219,7 +239,16 @@ class Signer
     self
   end
 
-  # <SignatureValue>...</SignatureValue>
+  ##
+  # Sign document with provided certificate, private key and other options
+  #
+  # This should be very last action before calling +to_xml+, all the required nodes should be digested with +digest!+ **before** signing.
+  #
+  # Available options:
+  # * [+:security_token+]       Serializes certificate in DER format, encodes it with Base64 and inserts it within +<BinarySecurityToken>+ tag
+  # * [+:issuer_serial+]
+  # * [+:inclusive_namespaces+] Array of namespace prefixes which definitions should be added to signed info node during canonicalization
+
   def sign!(options = {})
     if options[:security_token]
       binary_security_token_node
@@ -229,7 +258,15 @@ class Signer
       x509_data_node
     end
 
-    signed_info_canon = canonicalize(signed_info_node)
+    if options[:inclusive_namespaces]
+      c14n_method_node = signed_info_node.at_xpath('ds:CanonicalizationMethod', ds: 'http://www.w3.org/2000/09/xmldsig#')
+      inclusive_namespaces_node = Nokogiri::XML::Node.new('ec:InclusiveNamespaces', document)
+      inclusive_namespaces_node.add_namespace_definition('ec', c14n_method_node['Algorithm'])
+      inclusive_namespaces_node['PrefixList'] = options[:inclusive_namespaces].join(' ')
+      c14n_method_node.add_child(inclusive_namespaces_node)
+    end
+
+    signed_info_canon = canonicalize(signed_info_node, options[:inclusive_namespaces])
 
     signature = private_key.sign(@sign_digester.digester, signed_info_canon)
     signature_value_digest = Base64.encode64(signature).gsub("\n", '')

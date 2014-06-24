@@ -68,6 +68,26 @@ describe Signer do
     signer.to_xml.should == Nokogiri::XML(File.read(output_xml_file), &:noblanks).to_xml(:save_with => 0)
   end
 
+  it "should digest and sign SOAP XML with inclusive namespaces" do
+    input_xml_file   = File.join(File.dirname(__FILE__), 'fixtures', 'input_1.xml')
+    cert_file        = File.join(File.dirname(__FILE__), 'fixtures', 'cert.pem')
+    private_key_file = File.join(File.dirname(__FILE__), 'fixtures', 'key.pem')
+
+    signer = Signer.new(File.read(input_xml_file))
+    signer.cert = OpenSSL::X509::Certificate.new(File.read(cert_file))
+    signer.private_key = OpenSSL::PKey::RSA.new(File.read(private_key_file), "test")
+
+    signer.document.xpath("//soap:Body", { "soap" => "http://www.w3.org/2003/05/soap-envelope" }).each do |node|
+      signer.digest!(node, inclusive_namespaces: ['s'])
+    end
+
+    signer.sign!(security_token: true, inclusive_namespaces: ['s'])
+
+    output_xml_file = File.join(File.dirname(__FILE__), 'fixtures', 'output_1_inclusive_namespaces.xml')
+
+    signer.to_xml.should == Nokogiri::XML(File.read(output_xml_file), &:noblanks).to_xml(:save_with => 0)
+  end
+
   it "should sign simple XML" do
     input_xml_file   = File.join(File.dirname(__FILE__), 'fixtures', 'input_2.xml')
     cert_file        = File.join(File.dirname(__FILE__), 'fixtures', 'cert.pem')
