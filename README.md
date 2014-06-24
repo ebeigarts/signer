@@ -1,6 +1,7 @@
 # Signer
 
 [![Continuous Integration status](https://secure.travis-ci.org/ebeigarts/signer.png)](http://travis-ci.org/ebeigarts/signer)
+[![Gem Version](https://badge.fury.io/rb/signer.svg)](http://badge.fury.io/rb/signer)
 
 WS Security XML Certificate signing for Ruby
 
