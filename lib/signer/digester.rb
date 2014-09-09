@@ -20,12 +20,7 @@ class Signer
     gostr3411: {
       name: 'GOST R 34.11-94',
       id: 'http://www.w3.org/2001/04/xmldsig-more#gostr3411',
-      digester: lambda {
-        OpenSSL::Engine.load
-        gost_engine = OpenSSL::Engine.by_id('gost')
-        gost_engine.set_default(0xFFFF)
-        gost_engine.digest('md_gost94')
-      },
+      digester: lambda { OpenSSL::Digest.new('md_gost94') },
     },
   }
 

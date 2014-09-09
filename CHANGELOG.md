@@ -1,3 +1,7 @@
+## 1.4.1 (2014-09-09)
+
+- Changed method of getting GOST R 34.11-94 digest algorithm to more short and generic (and working in Ubuntu 14.04 and other OS)
+
 ## 1.4.0 (2014-06-24)
 
 - Support signing and digesting with inclusive namespaces (#5, @Envek)
