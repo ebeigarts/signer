@@ -9,7 +9,7 @@ require "signer/version"
 class Signer
   attr_accessor :document, :private_key, :signature_algorithm_id
   attr_reader :cert
-  attr_writer :security_node, :security_token_id
+  attr_writer :security_node, :signature_node, :security_token_id
 
   WSU_NAMESPACE = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd'
   WSSE_NAMESPACE = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd'
@@ -78,13 +78,15 @@ class Signer
 
   # <Signature xmlns="http://www.w3.org/2000/09/xmldsig#">
   def signature_node
-    node = document.xpath("//ds:Signature", "ds" => "http://www.w3.org/2000/09/xmldsig#").first
-    unless node
-      node = Nokogiri::XML::Node.new('Signature', document)
-      node.default_namespace = 'http://www.w3.org/2000/09/xmldsig#'
-      security_node.add_child(node)
+    @signature_node ||= begin
+      @signature_node = security_node.at_xpath('ds:Signature', ds: 'http://www.w3.org/2000/09/xmldsig#')
+      unless @signature_node
+        @signature_node = Nokogiri::XML::Node.new('Signature', document)
+        @signature_node.default_namespace = 'http://www.w3.org/2000/09/xmldsig#'
+        security_node.add_child(@signature_node)
+      end
+      @signature_node
     end
-    node
   end
 
   # <SignedInfo>
@@ -93,7 +95,7 @@ class Signer
   #   ...
   # </SignedInfo>
   def signed_info_node
-    node = signature_node.xpath("//ds:SignedInfo", "ds" => 'http://www.w3.org/2000/09/xmldsig#').first
+    node = signature_node.at_xpath('ds:SignedInfo', ds: 'http://www.w3.org/2000/09/xmldsig#')
     unless node
       node = Nokogiri::XML::Node.new('SignedInfo', document)
       signature_node.add_child(node)
@@ -119,7 +121,7 @@ class Signer
   #   </o:SecurityTokenReference>
   # </KeyInfo>
   def binary_security_token_node
-    node = document.xpath('//wsse:BinarySecurityToken', wsse: WSSE_NAMESPACE).first
+    node = document.at_xpath('wsse:BinarySecurityToken', wsse: WSSE_NAMESPACE)
     unless node
       node = Nokogiri::XML::Node.new('BinarySecurityToken', document)
       node['ValueType']    = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-x509-token-profile-1.0#X509v3'

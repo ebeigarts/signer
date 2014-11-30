@@ -1,3 +1,7 @@
+## 1.4.2 (2014-11-30)
+
+- Fixed behaviour on XMLs that already contains nested signatures somewhere
+
 ## 1.4.1 (2014-09-09)
 
 - Changed method of getting GOST R 34.11-94 digest algorithm to more short and generic (and working in Ubuntu 14.04 and other OS)
