@@ -153,25 +153,28 @@ class Signer
   #   </X509Data>
   # </KeyInfo>
   def x509_data_node
-    issuer_name_node   = Nokogiri::XML::Node.new('X509IssuerName', document)
-    issuer_name_node.content = "System.Security.Cryptography.X509Certificates.X500DistinguishedName"
+    issuer_name_node   = Nokogiri::XML::Node.new('ds:X509IssuerName', document)
+    issuer_name_node.content = cert.issuer.to_s[1..-1].gsub(/\//, ',') #.split(',').reverse.join(',')
 
-    issuer_number_node = Nokogiri::XML::Node.new('X509SerialNumber', document)
+    issuer_number_node = Nokogiri::XML::Node.new('ds:X509SerialNumber', document)
     issuer_number_node.content = cert.serial
 
-    issuer_serial_node = Nokogiri::XML::Node.new('X509IssuerSerial', document)
+    issuer_serial_node = Nokogiri::XML::Node.new('ds:X509IssuerSerial', document)
     issuer_serial_node.add_child(issuer_name_node)
     issuer_serial_node.add_child(issuer_number_node)
 
-    cetificate_node    = Nokogiri::XML::Node.new('X509Certificate', document)
-    cetificate_node.content = Base64.encode64(cert.to_der).gsub("\n", '')
+    certificate_node   = Nokogiri::XML::Node.new('ds:X509Certificate', document)
+    certificate_node.content = Base64.encode64(cert.to_der).gsub("\n", '')
 
-    data_node          = Nokogiri::XML::Node.new('X509Data', document)
+    data_node          = Nokogiri::XML::Node.new('ds:X509Data', document)
     data_node.add_child(issuer_serial_node)
-    data_node.add_child(cetificate_node)
+    data_node.add_child(certificate_node)
 
-    key_info_node      = Nokogiri::XML::Node.new('KeyInfo', document)
-    key_info_node.add_child(data_node)
+    security_token_reference_node = Nokogiri::XML::Node.new("wsse:SecurityTokenReference", document)
+    security_token_reference_node.add_child(data_node)
+
+    key_info_node      = Nokogiri::XML::Node.new('ds:KeyInfo', document)
+    key_info_node.add_child(security_token_reference_node)
 
     signed_info_node.add_next_sibling(key_info_node)
 
@@ -207,6 +210,7 @@ class Signer
       wsu_ns ||= namespace_prefix(target_node, WSU_NAMESPACE, 'wsu')
       target_node["#{wsu_ns}:Id"] = id.to_s
     end
+
     target_canon = canonicalize(target_node, options[:inclusive_namespaces])
     target_digest = Base64.encode64(@digester.digest(target_canon)).strip
 
