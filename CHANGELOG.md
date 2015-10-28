@@ -1,3 +1,7 @@
+## 1.4.3 (2015-10-28)
+
+- Fixed Issuer Name node (#8, @tiagocasanovapt)
+
 ## 1.4.2 (2014-11-30)
 
 - Fixed behaviour on XMLs that already contains nested signatures somewhere
