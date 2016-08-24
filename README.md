@@ -228,3 +228,9 @@ signer.sign! # No need to pass a :security_token option, as we already construct
 ```
 
 If you need to use canonicalization with inclusive namespaces you can pass array of namespace prefixes in `:inclusive_namespaces` option in both `digest!` and `sign!` methods.
+
+If you need `Signature` tags to be in explicit namespace (say, `<ds:Signature>`) instead of to be in implicit default namespace you can specify next option:
+
+```ruby
+signer.ds_namespace_prefix = 'ds'
+```
