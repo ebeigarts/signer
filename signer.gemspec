@@ -14,7 +14,7 @@ Gem::Specification.new do |gem|
 
   gem.name          = "signer"
   gem.require_paths = ["lib"]
-  gem.version       = Signer::VERSION
+  gem.version       = "1.4.3.1"
 
   gem.add_development_dependency "rake"
   gem.add_development_dependency "rspec"
