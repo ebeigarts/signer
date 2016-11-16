@@ -7,12 +7,13 @@ require "signer/digester"
 require "signer/version"
 
 class Signer
-  attr_accessor :document, :private_key, :signature_algorithm_id
+  attr_accessor :document, :private_key, :signature_algorithm_id, :ds_namespace_prefix
   attr_reader :cert
   attr_writer :security_node, :signature_node, :security_token_id
 
   WSU_NAMESPACE = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd'
   WSSE_NAMESPACE = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd'
+  DS_NAMESPACE = 'http://www.w3.org/2000/09/xmldsig#'
 
   def initialize(document)
     self.document = Nokogiri::XML(document.to_s, &:noblanks)
@@ -79,10 +80,10 @@ class Signer
   # <Signature xmlns="http://www.w3.org/2000/09/xmldsig#">
   def signature_node
     @signature_node ||= begin
-      @signature_node = security_node.at_xpath('ds:Signature', ds: 'http://www.w3.org/2000/09/xmldsig#')
+      @signature_node = security_node.at_xpath('ds:Signature', ds: DS_NAMESPACE)
       unless @signature_node
         @signature_node = Nokogiri::XML::Node.new('Signature', document)
-        @signature_node.default_namespace = 'http://www.w3.org/2000/09/xmldsig#'
+        set_namespace_for_node(@signature_node, DS_NAMESPACE, ds_namespace_prefix)
         security_node.add_child(@signature_node)
       end
       @signature_node
@@ -95,16 +96,19 @@ class Signer
   #   ...
   # </SignedInfo>
   def signed_info_node
-    node = signature_node.at_xpath('ds:SignedInfo', ds: 'http://www.w3.org/2000/09/xmldsig#')
+    node = signature_node.at_xpath('ds:SignedInfo', ds: DS_NAMESPACE)
     unless node
       node = Nokogiri::XML::Node.new('SignedInfo', document)
       signature_node.add_child(node)
+      set_namespace_for_node(node, DS_NAMESPACE, ds_namespace_prefix)
       canonicalization_method_node = Nokogiri::XML::Node.new('CanonicalizationMethod', document)
       canonicalization_method_node['Algorithm'] = 'http://www.w3.org/2001/10/xml-exc-c14n#'
       node.add_child(canonicalization_method_node)
+      set_namespace_for_node(canonicalization_method_node, DS_NAMESPACE, ds_namespace_prefix)
       signature_method_node = Nokogiri::XML::Node.new('SignatureMethod', document)
       signature_method_node['Algorithm'] = self.signature_algorithm_id
       node.add_child(signature_method_node)
+      set_namespace_for_node(signature_method_node, DS_NAMESPACE, ds_namespace_prefix)
     end
     node
   end
@@ -134,6 +138,7 @@ class Signer
       key_info_node = Nokogiri::XML::Node.new('KeyInfo', document)
       security_token_reference_node = Nokogiri::XML::Node.new("#{wsse_ns}:SecurityTokenReference", document)
       key_info_node.add_child(security_token_reference_node)
+      set_namespace_for_node(key_info_node, DS_NAMESPACE, ds_namespace_prefix)
       reference_node = Nokogiri::XML::Node.new("#{wsse_ns}:Reference", document)
       reference_node['ValueType'] = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-x509-token-profile-1.0#X509v3'
       reference_node['URI'] = "##{security_token_id}"
@@ -175,6 +180,13 @@ class Signer
 
     signed_info_node.add_next_sibling(key_info_node)
 
+    set_namespace_for_node(key_info_node, DS_NAMESPACE, ds_namespace_prefix)
+    set_namespace_for_node(data_node, DS_NAMESPACE, ds_namespace_prefix)
+    set_namespace_for_node(issuer_serial_node, DS_NAMESPACE, ds_namespace_prefix)
+    set_namespace_for_node(cetificate_node, DS_NAMESPACE, ds_namespace_prefix)
+    set_namespace_for_node(issuer_name_node, DS_NAMESPACE, ds_namespace_prefix)
+    set_namespace_for_node(issuer_number_node, DS_NAMESPACE, ds_namespace_prefix)
+
     data_node
   end
 
@@ -213,11 +225,14 @@ class Signer
     reference_node = Nokogiri::XML::Node.new('Reference', document)
     reference_node['URI'] = id.to_s.size > 0 ? "##{id}" : ""
     signed_info_node.add_child(reference_node)
+    set_namespace_for_node(reference_node, DS_NAMESPACE, ds_namespace_prefix)
 
     transforms_node = Nokogiri::XML::Node.new('Transforms', document)
     reference_node.add_child(transforms_node)
+    set_namespace_for_node(transforms_node, DS_NAMESPACE, ds_namespace_prefix)
 
     transform_node = Nokogiri::XML::Node.new('Transform', document)
+    set_namespace_for_node(transform_node, DS_NAMESPACE, ds_namespace_prefix)
     if options[:enveloped]
       transform_node['Algorithm'] = 'http://www.w3.org/2000/09/xmldsig#enveloped-signature'
     else
@@ -234,10 +249,12 @@ class Signer
     digest_method_node = Nokogiri::XML::Node.new('DigestMethod', document)
     digest_method_node['Algorithm'] = @digester.digest_id
     reference_node.add_child(digest_method_node)
+    set_namespace_for_node(digest_method_node, DS_NAMESPACE, ds_namespace_prefix)
 
     digest_value_node = Nokogiri::XML::Node.new('DigestValue', document)
     digest_value_node.content = target_digest
     reference_node.add_child(digest_value_node)
+    set_namespace_for_node(digest_value_node, DS_NAMESPACE, ds_namespace_prefix)
     self
   end
 
@@ -261,7 +278,7 @@ class Signer
     end
 
     if options[:inclusive_namespaces]
-      c14n_method_node = signed_info_node.at_xpath('ds:CanonicalizationMethod', ds: 'http://www.w3.org/2000/09/xmldsig#')
+      c14n_method_node = signed_info_node.at_xpath('ds:CanonicalizationMethod', ds: DS_NAMESPACE)
       inclusive_namespaces_node = Nokogiri::XML::Node.new('ec:InclusiveNamespaces', document)
       inclusive_namespaces_node.add_namespace_definition('ec', c14n_method_node['Algorithm'])
       inclusive_namespaces_node['PrefixList'] = options[:inclusive_namespaces].join(' ')
@@ -276,6 +293,7 @@ class Signer
     signature_value_node = Nokogiri::XML::Node.new('SignatureValue', document)
     signature_value_node.content = signature_value_digest
     signed_info_node.add_next_sibling(signature_value_node)
+    set_namespace_for_node(signature_value_node, DS_NAMESPACE, ds_namespace_prefix)
     self
   end
 
@@ -304,4 +322,13 @@ class Signer
     end
   end
 
+  ##
+  # Searches for namespace with given +href+ within +node+ ancestors and assigns it to this node.
+  # If there is no such namespace, it will create it with +desired_prefix+ if present or as default namespace otherwise.
+  # In most cases you should insert +node+ in the document tree before calling this method to avoid duplicating namespace definitions
+  def set_namespace_for_node(node, href, desired_prefix = nil)
+    return node.namespace if node.namespace && node.namespace.href == href # This node already in target namespace, done
+    namespace = node.namespace_scopes.find { |ns| ns.href == href }
+    node.namespace = namespace || node.add_namespace_definition(desired_prefix, href)
+  end
 end
