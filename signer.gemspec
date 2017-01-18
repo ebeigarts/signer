@@ -16,8 +16,10 @@ Gem::Specification.new do |gem|
   gem.require_paths = ["lib"]
   gem.version       = Signer::VERSION
 
-  gem.add_development_dependency "rake"
-  gem.add_development_dependency "rspec"
+  gem.required_ruby_version = '>= 2.1.0'
 
-  gem.add_runtime_dependency "nokogiri", ">= 1.5.1"
+  gem.add_development_dependency 'rake'
+  gem.add_development_dependency 'rspec'
+
+  gem.add_runtime_dependency 'nokogiri', '>= 1.5.1'
 end
