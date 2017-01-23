@@ -228,3 +228,10 @@ signer.sign! # No need to pass a :security_token option, as we already construct
 ```
 
 If you need to use canonicalization with inclusive namespaces you can pass array of namespace prefixes in `:inclusive_namespaces` option in both `digest!` and `sign!` methods.
+
+
+Every new instance of signer has Nokogiri `noblanks` set as default in process of parsing xml file. If you need to disable it, pass opional argument `noblanks: false`.
+
+```
+Signer.new(File.read("example.xml"), noblanks: false)
+```

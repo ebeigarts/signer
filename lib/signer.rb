@@ -14,8 +14,10 @@ class Signer
   WSU_NAMESPACE = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd'
   WSSE_NAMESPACE = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd'
 
-  def initialize(document)
-    self.document = Nokogiri::XML(document.to_s, &:noblanks)
+  def initialize(document, noblanks: true)
+    self.document = Nokogiri::XML(document.to_s) do |config|
+      config.noblanks if noblanks
+    end
     self.digest_algorithm = :sha1
     self.set_default_signature_method!
   end
