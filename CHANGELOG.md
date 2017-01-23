@@ -1,3 +1,8 @@
+## 1.5.0 (2017-01-23)
+
+- Add posibility to disable noblanks method in Signer initialization (#16, @bpietraga)
+- Minimum ruby version is now 2.1
+
 ## 1.4.3 (2015-10-28)
 
 - Fixed Issuer Name node (#8, @tiagocasanovapt)
