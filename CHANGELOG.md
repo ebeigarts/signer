@@ -1,3 +1,7 @@
+## 1.5.1 (2017-03-23)
+
+- Allow to set up custom xmldsig namespace prefix for Signature node (#14, @Envek)
+
 ## 1.5.0 (2017-01-23)
 
 - Add posibility to disable noblanks method in Signer initialization (#16, @bpietraga)
