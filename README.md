@@ -234,3 +234,9 @@ If you need `Signature` tags to be in explicit namespace (say, `<ds:Signature>`)
 ```ruby
 signer.ds_namespace_prefix = 'ds'
 ```
+
+Every new instance of signer has Nokogiri `noblanks` set as default in process of parsing xml file. If you need to disable it, pass opional argument `noblanks: false`.
+
+```ruby
+Signer.new(File.read("example.xml"), noblanks: false)
+```

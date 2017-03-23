@@ -161,4 +161,32 @@ describe Signer do
     signer.to_xml.should == Nokogiri::XML(File.read(output_xml_file), &:noblanks).to_xml(:save_with => 0)
   end
 
+  it "should digest and sign SOAP XML with security node and digested binary token with noblanks diabled" do
+    input_xml_file   = File.join(File.dirname(__FILE__), 'fixtures', 'input_4_with_nested_signatures.xml')
+    cert_file        = File.join(File.dirname(__FILE__), 'fixtures', 'cert.pem')
+    private_key_file = File.join(File.dirname(__FILE__), 'fixtures', 'key.pem')
+
+    signer = Signer.new(File.read(input_xml_file), noblanks: false)
+    signer.cert = OpenSSL::X509::Certificate.new(File.read(cert_file))
+    signer.private_key = OpenSSL::PKey::RSA.new(File.read(private_key_file), "test")
+    signer.security_node = signer.document.at_xpath('//soap:Header/wsse:Security', soap: 'http://www.w3.org/2003/05/soap-envelope', wsse: Signer::WSSE_NAMESPACE)
+
+    signer.document.xpath("//u:Timestamp", { "u" => "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" }).each do |node|
+      signer.digest!(node)
+    end
+
+    signer.document.xpath("//a:To", { "a" => "http://www.w3.org/2005/08/addressing" }).each do |node|
+      signer.digest!(node)
+    end
+
+    signer.digest!(signer.binary_security_token_node)
+
+    signer.sign!
+
+    output_xml_file = File.join(File.dirname(__FILE__),
+                                'fixtures',
+                                'output_4_with_nested_signatures_with_noblanks_disabled.xml')
+
+    signer.to_xml.should == Nokogiri::XML(File.read(output_xml_file)).to_xml(:save_with => 0)
+  end
 end
