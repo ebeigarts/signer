@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<ApplicationRequest xmlns="http://bxd.fi/xmldata/">
+  <CustomerId>679155330</CustomerId>
+  <Command>GetUserInfo</Command>
+  <Timestamp>2010-05-10T13:22:19.847+03:00</Timestamp>
+  <Environment>PRODUCTION</Environment>
+  <SoftwareId>Petri</SoftwareId>
+  <ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+    <ds:SignedInfo>
+      <ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+      <ds:SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"/>
+      <ds:Reference URI="">
+        <ds:Transforms>
+          <ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/>
+        </ds:Transforms>
+        <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
+        <ds:DigestValue>U9tsT4lrRMp8ZdKMnblgeMCGfvI=</ds:DigestValue>
+      </ds:Reference>
+    </ds:SignedInfo>
+    <ds:SignatureValue>rOCe8McbIFa4Ul3pnzd/dBjFWoT4JtSghJgzZGLrz17K/j0W1JyaopcZeMD+8M5/GplAlQrJg3ZSkQvY9Sf7WpqZeLYHW17J0ZJpwas+/OOXUEdyUiec7q9OgWsFLH9DBNuJdLKE3CO6w/8tTKQ/kidYnPBXT6FKioNlSJVZsuI=</ds:SignatureValue>
+    <ds:KeyInfo>
+      <ds:X509Data>
+        <ds:X509IssuerSerial>
+          <ds:X509IssuerName>C=AU,ST=Some-State,O=Internet Widgits Pty Ltd</ds:X509IssuerName>
+          <ds:X509SerialNumber>16503368396260674861</ds:X509SerialNumber>
+        </ds:X509IssuerSerial>
+        <ds:X509Certificate>MIICsDCCAhmgAwIBAgIJAOUHvh4oho0tMA0GCSqGSIb3DQEBBQUAMEUxCzAJBgNVBAYTAkFVMRMwEQYDVQQIEwpTb21lLVN0YXRlMSEwHwYDVQQKExhJbnRlcm5ldCBXaWRnaXRzIFB0eSBMdGQwHhcNMTIwNTAzMTMxODIyWhcNMTMwNTAzMTMxODIyWjBFMQswCQYDVQQGEwJBVTETMBEGA1UECBMKU29tZS1TdGF0ZTEhMB8GA1UEChMYSW50ZXJuZXQgV2lkZ2l0cyBQdHkgTHRkMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCvK5hMPv/R5IFmwWyJOyEaFUrF/ZsmN+Gip8hvR6rLP3YPNx9iFYvPcZllFmuVwyaz7YT2N5BsqTwLdyi5v4HY4fUtuz0p8jIPoSd6dfDvcnSpf4QLTOgOaL3ciPEbgDHH2tnIksukoWzqCYva+qFZ74NFl19swXotW9fA4Jzs4QIDAQABo4GnMIGkMB0GA1UdDgQWBBRU1WEHDnP8Hr7ZulxrSzEwOcYpMzB1BgNVHSMEbjBsgBRU1WEHDnP8Hr7ZulxrSzEwOcYpM6FJpEcwRTELMAkGA1UEBhMCQVUxEzARBgNVBAgTClNvbWUtU3RhdGUxITAfBgNVBAoTGEludGVybmV0IFdpZGdpdHMgUHR5IEx0ZIIJAOUHvh4oho0tMAwGA1UdEwQFMAMBAf8wDQYJKoZIhvcNAQEFBQADgYEASY/9SAOK57q9mGnNJJeyDbmyGrAHSJTod646xTHYkMvhUqwHyk9PTr5bdfmswpmyVn+AQ43U2tU5vnpTBmKpHWD2+HSHgGa92mMLrfBOd8EBZ329NL3N2HDPIaHr4NPGyhNrSK3QVOnAq2D0jlyrGYJlLli1NxHiBz7FCEJaVI8=</ds:X509Certificate>
+      </ds:X509Data>
+    </ds:KeyInfo>
+  </ds:Signature>
+</ApplicationRequest>
