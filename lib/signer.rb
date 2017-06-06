@@ -177,12 +177,16 @@ class Signer
     data_node.add_child(issuer_serial_node)
     data_node.add_child(cetificate_node)
 
+    security_token_reference_node = Nokogiri::XML::Node.new("wsse:SecurityTokenReference", document)
+    security_token_reference_node.add_child(data_node)
+
     key_info_node      = Nokogiri::XML::Node.new('KeyInfo', document)
-    key_info_node.add_child(data_node)
+    key_info_node.add_child(security_token_reference_node)
 
     signed_info_node.add_next_sibling(key_info_node)
 
     set_namespace_for_node(key_info_node, DS_NAMESPACE, ds_namespace_prefix)
+    set_namespace_for_node(security_token_reference_node, WSSE_NAMESPACE, ds_namespace_prefix)
     set_namespace_for_node(data_node, DS_NAMESPACE, ds_namespace_prefix)
     set_namespace_for_node(issuer_serial_node, DS_NAMESPACE, ds_namespace_prefix)
     set_namespace_for_node(cetificate_node, DS_NAMESPACE, ds_namespace_prefix)
