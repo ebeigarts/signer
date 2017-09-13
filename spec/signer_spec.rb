@@ -161,7 +161,7 @@ describe Signer do
     signer.to_xml.should == Nokogiri::XML(File.read(output_xml_file), &:noblanks).to_xml(:save_with => 0)
   end
 
-  it "should digest and sign SOAP XML with security node and digested binary token with noblanks diabled" do
+  it "should digest and sign SOAP XML with security node and digested binary token with noblanks disabled" do
     input_xml_file   = File.join(File.dirname(__FILE__), 'fixtures', 'input_4_with_nested_signatures.xml')
     cert_file        = File.join(File.dirname(__FILE__), 'fixtures', 'cert.pem')
     private_key_file = File.join(File.dirname(__FILE__), 'fixtures', 'key.pem')
@@ -188,5 +188,49 @@ describe Signer do
                                 'output_4_with_nested_signatures_with_noblanks_disabled.xml')
 
     signer.to_xml.should == Nokogiri::XML(File.read(output_xml_file)).to_xml(:save_with => 0)
+  end
+
+  it "should digest and sign SOAP XML with X509Data inside SecurityTokenReference node" do
+    input_xml_file   = File.join(File.dirname(__FILE__), 'fixtures', 'input_5.xml')
+    cert_file        = File.join(File.dirname(__FILE__), 'fixtures', 'cert.pem')
+    private_key_file = File.join(File.dirname(__FILE__), 'fixtures', 'key.pem')
+
+    signer = Signer.new(File.read(input_xml_file))
+    signer.cert = OpenSSL::X509::Certificate.new(File.read(cert_file))
+    signer.private_key = OpenSSL::PKey::RSA.new(File.read(private_key_file), "test")
+
+    # digest Body element from XML
+    signer.digest!(signer.document.at_xpath('//soapenv:Body'), id: 'Body', inclusive_namespaces: ['soapenv'])
+
+    # sign data from this request
+    signer.sign!(issuer_serial: true, issuer_in_security_token: true)
+
+    output_xml_file = File.join(File.dirname(__FILE__),
+                                'fixtures',
+                                'output_5_with_security_token.xml')
+
+    signer.to_xml.should == Nokogiri::XML(File.read(output_xml_file), &:noblanks).to_xml(:save_with => 0)
+  end
+
+  it "should digest and sign SOAP XML with X509Data" do
+    input_xml_file   = File.join(File.dirname(__FILE__), 'fixtures', 'input_5.xml')
+    cert_file        = File.join(File.dirname(__FILE__), 'fixtures', 'cert.pem')
+    private_key_file = File.join(File.dirname(__FILE__), 'fixtures', 'key.pem')
+
+    signer = Signer.new(File.read(input_xml_file))
+    signer.cert = OpenSSL::X509::Certificate.new(File.read(cert_file))
+    signer.private_key = OpenSSL::PKey::RSA.new(File.read(private_key_file), "test")
+
+    # digest Body element from XML
+    signer.digest!(signer.document.at_xpath('//soapenv:Body'), id: 'Body', inclusive_namespaces: ['soapenv'])
+
+    # sign data from this request
+    signer.sign!(issuer_serial: true)
+
+    output_xml_file = File.join(File.dirname(__FILE__),
+                                'fixtures',
+                                'output_5_with_x509_data.xml')
+
+    signer.to_xml.should == Nokogiri::XML(File.read(output_xml_file), &:noblanks).to_xml(:save_with => 0)
   end
 end
