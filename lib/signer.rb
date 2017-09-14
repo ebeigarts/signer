@@ -151,6 +151,7 @@ class Signer
   end
 
   # <KeyInfo>
+  # <SecurityTokenReference> (optional)
   #   <X509Data>
   #     <X509IssuerSerial>
   #       <X509IssuerName>System.Security.Cryptography.X509Certificates.X500DistinguishedName</X509IssuerName>
@@ -158,8 +159,9 @@ class Signer
   #     </X509IssuerSerial>
   #     <X509Certificate>MIID+jCCAuKgAwIBAgIEAMdxxTANBgkqhkiG9w0BAQUFADBsMQswCQYDVQQGEwJTRTEeMBwGA1UEChMVTm9yZGVhIEJhbmsgQUIgKHB1YmwpMScwJQYDVQQDEx5Ob3JkZWEgcm9sZS1jZXJ0aWZpY2F0ZXMgQ0EgMDExFDASBgNVBAUTCzUxNjQwNi0wMTIwMB4XDTA5MDYxMTEyNTAxOVoXDTExMDYxMTEyNTAxOVowcjELMAkGA1UEBhMCU0UxIDAeBgNVBAMMF05vcmRlYSBEZW1vIENlcnRpZmljYXRlMRQwEgYDVQQEDAtDZXJ0aWZpY2F0ZTEUMBIGA1UEKgwLTm9yZGVhIERlbW8xFTATBgNVBAUTDDAwOTU1NzI0Mzc3MjCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAwcgz5AzbxTbsCE51No7fPnSqmQBIMW9OiPkiHotwYQTl+H9qwDvQRyBqHN26tnw7hNvEShd1ZRGUg4drMEXDV5CmKqsAevs9lauWDaHnGKPNHZJ1hNNYXHwymksEz5zMnG8eqRdhb4vOV2FzreJeYpsgx31Bv0aTofHcHVz4uGcCAwEAAaOCASAwggEcMAkGA1UdEwQCMAAwEQYDVR0OBAoECEj6Y9/vU03WMBMGA1UdIAQMMAowCAYGKoVwRwEDMBMGA1UdIwQMMAqACEIFjfLBeTpRMDcGCCsGAQUFBwEBBCswKTAnBggrBgEFBQcwAYYbaHR0cDovL29jc3Aubm9yZGVhLnNlL1JDQTAxMA4GA1UdDwEB/wQEAwIGQDCBiAYDVR0fBIGAMH4wfKB6oHiGdmxkYXA6Ly9sZGFwLm5iLnNlL2NuPU5vcmRlYSUyMHJvbGUtY2VydGlmaWNhdGVzJTIwQ0ElMjAwMSxvPU5vcmRlYSUyMEJhbmslMjBBQiUyMChwdWJsKSxjPVNFP2NlcnRpZmljYXRlcmV2b2NhdGlvbmxpc3QwDQYJKoZIhvcNAQEFBQADggEBAEXUv87VpHk51y3TqkMb1MYDqeKvQRE1cNcvhEJhIzdDpXMA9fG0KqvSTT1e0ZI2r78mXDvtTZnpic44jX2XMSmKO6n+1taAXq940tJUhF4arYMUxwDKOso0Doanogug496gipqMlpLgvIhGt06sWjNrvHzp2eGydUFdCsLr2ULqbDcut7g6eMcmrsnrOntjEU/J3hO8gyCeldJ+fI81qarrK/I0MZLR5LWCyVG/SKduoxHLX7JohsbIGyK1qAh9fi8l6X1Rcu80v5inpu71E/DnjbkAZBo7vsj78zzdk7KNliBIqBcIszdJ3dEHRWSI7FspRxyiR0NDm4lpyLwFtfw=</X509Certificate>
   #   </X509Data>
+  # </SecurityTokenReference> (optional)
   # </KeyInfo>
-  def x509_data_node
+  def x509_data_node(issuer_in_security_token = false)
     issuer_name_node   = Nokogiri::XML::Node.new('X509IssuerName', document)
     issuer_name_node.content = cert.issuer.to_s[1..-1].gsub(/\//, ',')
 
@@ -177,12 +179,18 @@ class Signer
     data_node.add_child(issuer_serial_node)
     data_node.add_child(cetificate_node)
 
+    if issuer_in_security_token
+      security_token_reference_node = Nokogiri::XML::Node.new("wsse:SecurityTokenReference", document)
+      security_token_reference_node.add_child(data_node)
+    end
+
     key_info_node      = Nokogiri::XML::Node.new('KeyInfo', document)
-    key_info_node.add_child(data_node)
+    key_info_node.add_child(issuer_in_security_token ? security_token_reference_node : data_node)
 
     signed_info_node.add_next_sibling(key_info_node)
 
     set_namespace_for_node(key_info_node, DS_NAMESPACE, ds_namespace_prefix)
+    set_namespace_for_node(security_token_reference_node, WSSE_NAMESPACE, ds_namespace_prefix) if issuer_in_security_token
     set_namespace_for_node(data_node, DS_NAMESPACE, ds_namespace_prefix)
     set_namespace_for_node(issuer_serial_node, DS_NAMESPACE, ds_namespace_prefix)
     set_namespace_for_node(cetificate_node, DS_NAMESPACE, ds_namespace_prefix)
@@ -268,6 +276,7 @@ class Signer
   # Available options:
   # * [+:security_token+]       Serializes certificate in DER format, encodes it with Base64 and inserts it within +<BinarySecurityToken>+ tag
   # * [+:issuer_serial+]
+  # * [+:issuer_in_security_token+]
   # * [+:inclusive_namespaces+] Array of namespace prefixes which definitions should be added to signed info node during canonicalization
 
   def sign!(options = {})
@@ -276,7 +285,7 @@ class Signer
     end
 
     if options[:issuer_serial]
-      x509_data_node
+      x509_data_node(options[:issuer_in_security_token])
     end
 
     if options[:inclusive_namespaces]

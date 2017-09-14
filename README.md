@@ -220,6 +220,15 @@ __NOTE__: To sign XMLs with __GOST R 34.10-2001__, you need to have Ruby compile
 
 ## Miscellaneous
 
+Every new instance of signer has Nokogiri `noblanks` set as default in process of parsing xml file. If you need to disable it, pass optional argument `noblanks: false`.
+
+```ruby
+Signer.new(File.read("example.xml"), noblanks: false)
+```
+
+Available options for the `sign!` method:
+  * [:security_token] - Serializes certificate in DER format, encodes it with Base64 and inserts it within a `BinarySecurityToken` tag
+
 If you need to digest a `BinarySecurityToken` tag, you need to construct it yourself **before** signing.
 
 ```ruby
@@ -227,7 +236,7 @@ signer.digest!(signer.binary_security_token_node) # Constructing tag and digesti
 signer.sign! # No need to pass a :security_token option, as we already constructed and inserted this node
 ```
 
-If you need to use canonicalization with inclusive namespaces you can pass array of namespace prefixes in `:inclusive_namespaces` option in both `digest!` and `sign!` methods.
+  * [:inclusive_namespaces] - Array of namespace prefixes which definitions should be added to signed info node during canonicalization
 
 If you need `Signature` tags to be in explicit namespace (say, `<ds:Signature>`) instead of to be in implicit default namespace you can specify next option:
 
@@ -235,8 +244,7 @@ If you need `Signature` tags to be in explicit namespace (say, `<ds:Signature>`)
 signer.ds_namespace_prefix = 'ds'
 ```
 
-Every new instance of signer has Nokogiri `noblanks` set as default in process of parsing xml file. If you need to disable it, pass opional argument `noblanks: false`.
+If you need to use canonicalization with inclusive namespaces you can pass array of namespace prefixes in `:inclusive_namespaces` option in both `digest!` and `sign!` methods.
 
-```ruby
-Signer.new(File.read("example.xml"), noblanks: false)
-```
+  * [:issuer_serial] - flag to include a `X509Data` node to include information from a `X509Certificate`
+  * [:issuer_in_security_token] - flag to include the `X509Data` inside a `SecurityTokenReference` element
