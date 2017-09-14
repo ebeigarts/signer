@@ -1,3 +1,7 @@
+## 1.6.0 (2017-09-14)
+
+- X509 in SecurityTokenReference node (#17, @tiagocasanovapt)
+
 ## 1.5.1 (2017-03-23)
 
 - Allow to set up custom xmldsig namespace prefix for Signature node (#14, @Envek)
