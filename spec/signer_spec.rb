@@ -57,7 +57,7 @@ describe Signer do
     signer.private_key = OpenSSL::PKey::RSA.new(File.read(private_key_file), "test")
     signer.digest_algorithm = :sha256
     signer.signature_digest_algorithm = :sha256
-    signer.signature_algorithm_id = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256'
+    signer.signature_algorithm_id = 'http://www.w3.org/2001/04/xmlenc#sha256'
 
     signer.digest!(signer.binary_security_token_node)
 
@@ -144,12 +144,16 @@ describe Signer do
     cert_file        = File.join(File.dirname(__FILE__), 'fixtures', 'cert.pem')
     private_key_file = File.join(File.dirname(__FILE__), 'fixtures', 'key.pem')
 
-    signer = Signer.new(File.read(input_xml_file))
+    signer = Signer.new(File.read(input_xml_file), wss: false)
     signer.cert = OpenSSL::X509::Certificate.new(File.read(cert_file))
     signer.private_key = OpenSSL::PKey::RSA.new(File.read(private_key_file), "test")
     signer.security_node = signer.document.root
     signer.security_token_id = ""
     signer.ds_namespace_prefix = 'ds'
+
+    # partially sign element
+    signer.digest!(signer.document.root.children.first, :enveloped => true)
+
     signer.digest!(signer.document.root, :id => "", :enveloped => true)
     signer.sign!(:issuer_serial => true)
 
