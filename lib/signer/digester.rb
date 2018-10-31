@@ -12,9 +12,15 @@ class Signer
     },
     # SHA 256
     sha256: {
-        name: 'SHA256',
-        id: 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256',
-        digester: lambda { OpenSSL::Digest::SHA256.new },
+      name: 'SHA256',
+      id: 'http://www.w3.org/2001/04/xmlenc#sha256',
+      digester: lambda { OpenSSL::Digest::SHA256.new },
+    },
+    # SHA512
+    sha512: {
+      name: 'SHA512',
+      id: 'http://www.w3.org/2001/04/xmlenc#sha512',
+      digester: lambda { OpenSSL::Digest::SHA512.new },
     },
     # GOST R 34-11 94
     gostr3411: {
