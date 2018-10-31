@@ -109,6 +109,7 @@ describe Signer do
     signer.to_xml.should == Nokogiri::XML(File.read(output_xml_file), &:noblanks).to_xml(:save_with => 0)
   end
 
+
   it "should digest and sign SOAP XML with security node and digested binary token" do
     input_xml_file   = File.join(File.dirname(__FILE__), 'fixtures', 'input_4_with_nested_signatures.xml')
     cert_file        = File.join(File.dirname(__FILE__), 'fixtures', 'cert.pem')
@@ -144,6 +145,29 @@ describe Signer do
     cert_file        = File.join(File.dirname(__FILE__), 'fixtures', 'cert.pem')
     private_key_file = File.join(File.dirname(__FILE__), 'fixtures', 'key.pem')
 
+    signer = Signer.new(File.read(input_xml_file))
+    signer.cert = OpenSSL::X509::Certificate.new(File.read(cert_file))
+    signer.private_key = OpenSSL::PKey::RSA.new(File.read(private_key_file), "test")
+    signer.security_node = signer.document.root
+    signer.security_token_id = ""
+    signer.ds_namespace_prefix = 'ds'
+
+    signer.digest!(signer.document.root, :id => "", :enveloped => true)
+    signer.sign!(:issuer_serial => true)
+
+    # File.open(File.join(File.dirname(__FILE__), 'fixtures', 'output_2_with_ds_prefix.xml'), "w") do |f|
+    #   f.write signer.document.to_s
+    # end
+    output_xml_file = File.join(File.dirname(__FILE__), 'fixtures', 'output_2_with_ds_prefix.xml')
+
+    signer.to_xml.should == Nokogiri::XML(File.read(output_xml_file), &:noblanks).to_xml(:save_with => 0)
+  end
+
+  it "should partially sign element and simple XML with custom DS namespace prefix when wss is false" do
+    input_xml_file   = File.join(File.dirname(__FILE__), 'fixtures', 'input_2.xml')
+    cert_file        = File.join(File.dirname(__FILE__), 'fixtures', 'cert.pem')
+    private_key_file = File.join(File.dirname(__FILE__), 'fixtures', 'key.pem')
+
     signer = Signer.new(File.read(input_xml_file), wss: false)
     signer.cert = OpenSSL::X509::Certificate.new(File.read(cert_file))
     signer.private_key = OpenSSL::PKey::RSA.new(File.read(private_key_file), "test")
@@ -160,7 +184,7 @@ describe Signer do
     # File.open(File.join(File.dirname(__FILE__), 'fixtures', 'output_2_with_ds_prefix.xml'), "w") do |f|
     #   f.write signer.document.to_s
     # end
-    output_xml_file = File.join(File.dirname(__FILE__), 'fixtures', 'output_2_with_ds_prefix.xml')
+    output_xml_file = File.join(File.dirname(__FILE__), 'fixtures', 'output_2_with_ds_prefix_and_wss_disabled.xml')
 
     signer.to_xml.should == Nokogiri::XML(File.read(output_xml_file), &:noblanks).to_xml(:save_with => 0)
   end
