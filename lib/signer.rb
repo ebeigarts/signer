@@ -7,7 +7,7 @@ require "signer/digester"
 require "signer/version"
 
 class Signer
-  attr_accessor :document, :private_key, :signature_algorithm_id, :ds_namespace_prefix
+  attr_accessor :document, :private_key, :signature_algorithm_id, :ds_namespace_prefix, :wss
   attr_reader :cert
   attr_writer :security_node, :signature_node, :security_token_id
 
@@ -15,11 +15,12 @@ class Signer
   WSSE_NAMESPACE = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd'
   DS_NAMESPACE = 'http://www.w3.org/2000/09/xmldsig#'
 
-  def initialize(document, noblanks: true)
+  def initialize(document, noblanks: true, wss: true)
     self.document = Nokogiri::XML(document.to_s) do |config|
       config.noblanks if noblanks
     end
     self.digest_algorithm = :sha1
+    self.wss = wss
     self.set_default_signature_method!
   end
 
@@ -68,11 +69,11 @@ class Signer
   end
 
   def security_token_id
-    @security_token_id ||= "uuid-639b8970-7644-4f9e-9bc4-9c2e367808fc-1"
+    @security_token_id ||= wss? ? "uuid-639b8970-7644-4f9e-9bc4-9c2e367808fc-1" : ""
   end
 
   def security_node
-    @security_node ||= document.xpath('//wsse:Security', wsse: WSSE_NAMESPACE).first
+    @security_node ||= wss? ? document.xpath('//wsse:Security', wsse: WSSE_NAMESPACE).first : ''
   end
 
   def canonicalize(node = document, inclusive_namespaces=nil)
@@ -127,6 +128,7 @@ class Signer
   #   </o:SecurityTokenReference>
   # </KeyInfo>
   def binary_security_token_node
+    return unless wss?
     node = document.at_xpath('wsse:BinarySecurityToken', wsse: WSSE_NAMESPACE)
     unless node
       node = Nokogiri::XML::Node.new('BinarySecurityToken', document)
@@ -222,13 +224,19 @@ class Signer
   #   </Reference>
 
   def digest!(target_node, options = {})
-    wsu_ns = namespace_prefix(target_node, WSU_NAMESPACE)
-    current_id = target_node["#{wsu_ns}:Id"]  if wsu_ns
-    id = options[:id] || current_id || "_#{Digest::SHA1.hexdigest(target_node.to_s)}"
-    if id.to_s.size > 0
-      wsu_ns ||= namespace_prefix(target_node, WSU_NAMESPACE, 'wsu')
-      target_node["#{wsu_ns}:Id"] = id.to_s
+    if wss?
+      wsu_ns = namespace_prefix(target_node, WSU_NAMESPACE)
+      current_id = target_node["#{wsu_ns}:Id"]  if wsu_ns
+      id = options[:id] || current_id || "_#{Digest::SHA1.hexdigest(target_node.to_s)}"
+      unless id.to_s.empty?
+        wsu_ns ||= namespace_prefix(target_node, WSU_NAMESPACE, 'wsu')
+        target_node["#{wsu_ns}:Id"] = id.to_s
+      end
+    elsif target_node['Id'].nil?
+      id = options[:id] || "_#{Digest::SHA1.hexdigest(target_node.to_s)}"
+      target_node['Id'] = id.to_s unless id.empty?
     end
+
     target_canon = canonicalize(target_node, options[:inclusive_namespaces])
     target_digest = Base64.encode64(@digester.digest(target_canon)).strip
 
@@ -309,6 +317,11 @@ class Signer
   end
 
   protected
+
+  # Check are we using ws security?
+  def wss?
+    wss
+  end
 
   # Reset digest algorithm for signature creation and signature algorithm identifier
   def set_default_signature_method!
