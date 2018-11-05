@@ -1,3 +1,7 @@
+## 1.7.0 (2018-11-06)
+
+- Add wss option for XML only signing (#18, @pistachiology)
+
 ## 1.6.0 (2017-09-14)
 
 - X509 in SecurityTokenReference node (#17, @tiagocasanovapt)
