@@ -1,6 +1,8 @@
 ## 1.7.0 (2018-11-06)
 
 - Add wss option for XML only signing (#18, @pistachiology)
+- Add support for SHA512 Digest
+- Rename id for SHA256 Digest
 
 ## 1.6.0 (2017-09-14)
 
