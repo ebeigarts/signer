@@ -27,7 +27,7 @@ describe Signer do
     # end
     output_xml_file = File.join(File.dirname(__FILE__), 'fixtures', 'output_1.xml')
 
-    signer.to_xml.should == Nokogiri::XML(File.read(output_xml_file), &:noblanks).to_xml(:save_with => 0)
+    signer.to_xml.should == Nokogiri::XML(File.read(output_xml_file), &:noblanks).to_xml(save_with: 0)
   end
 
   it "should correctly canonicalize digested nodes (shouldn't account comments)" do
@@ -44,7 +44,7 @@ describe Signer do
 
     output_xml_file = File.join(File.dirname(__FILE__), 'fixtures', 'output_3_c14n_comments.xml')
 
-    signer.to_xml.should == Nokogiri::XML(File.read(output_xml_file), &:noblanks).to_xml(:save_with => 0)
+    signer.to_xml.should == Nokogiri::XML(File.read(output_xml_file), &:noblanks).to_xml(save_with: 0)
   end
 
   it "should digest and sign SOAP XML with SHA256" do
@@ -65,7 +65,7 @@ describe Signer do
 
     output_xml_file = File.join(File.dirname(__FILE__), 'fixtures', 'output_1_sha256.xml')
 
-    signer.to_xml.should == Nokogiri::XML(File.read(output_xml_file), &:noblanks).to_xml(:save_with => 0)
+    signer.to_xml.should == Nokogiri::XML(File.read(output_xml_file), &:noblanks).to_xml(save_with: 0)
   end
 
   it "should digest and sign SOAP XML with inclusive namespaces" do
@@ -85,7 +85,7 @@ describe Signer do
 
     output_xml_file = File.join(File.dirname(__FILE__), 'fixtures', 'output_1_inclusive_namespaces.xml')
 
-    signer.to_xml.should == Nokogiri::XML(File.read(output_xml_file), &:noblanks).to_xml(:save_with => 0)
+    signer.to_xml.should == Nokogiri::XML(File.read(output_xml_file), &:noblanks).to_xml(save_with: 0)
   end
 
   it "should sign simple XML" do
@@ -98,7 +98,7 @@ describe Signer do
     signer.private_key = OpenSSL::PKey::RSA.new(File.read(private_key_file), "test")
     signer.security_node = signer.document.root
     signer.security_token_id = ""
-    signer.digest!(signer.document.root, :id => "", :enveloped => true)
+    signer.digest!(signer.document.root, id: "", enveloped: true)
     signer.sign!(:issuer_serial => true)
 
     # File.open(File.join(File.dirname(__FILE__), 'fixtures', 'output_2.xml'), "w") do |f|
@@ -106,7 +106,7 @@ describe Signer do
     # end
     output_xml_file = File.join(File.dirname(__FILE__), 'fixtures', 'output_2.xml')
 
-    signer.to_xml.should == Nokogiri::XML(File.read(output_xml_file), &:noblanks).to_xml(:save_with => 0)
+    signer.to_xml.should == Nokogiri::XML(File.read(output_xml_file), &:noblanks).to_xml(save_with: 0)
   end
 
 
@@ -137,7 +137,7 @@ describe Signer do
     # end
     output_xml_file = File.join(File.dirname(__FILE__), 'fixtures', 'output_4_with_nested_signatures.xml')
 
-    signer.to_xml.should == Nokogiri::XML(File.read(output_xml_file), &:noblanks).to_xml(:save_with => 0)
+    signer.to_xml.should == Nokogiri::XML(File.read(output_xml_file), &:noblanks).to_xml(save_with: 0)
   end
 
   it "should sign simple XML with custom DS namespace prefix" do
@@ -152,15 +152,33 @@ describe Signer do
     signer.security_token_id = ""
     signer.ds_namespace_prefix = 'ds'
 
-    signer.digest!(signer.document.root, :id => "", :enveloped => true)
-    signer.sign!(:issuer_serial => true)
+    signer.digest!(signer.document.root, id: "", enveloped: true)
+    signer.sign!(issuer_serial: true)
 
     # File.open(File.join(File.dirname(__FILE__), 'fixtures', 'output_2_with_ds_prefix.xml'), "w") do |f|
     #   f.write signer.document.to_s
     # end
     output_xml_file = File.join(File.dirname(__FILE__), 'fixtures', 'output_2_with_ds_prefix.xml')
 
-    signer.to_xml.should == Nokogiri::XML(File.read(output_xml_file), &:noblanks).to_xml(:save_with => 0)
+    signer.to_xml.should == Nokogiri::XML(File.read(output_xml_file), &:noblanks).to_xml(save_with: 0)
+  end
+
+  it "should digest simple XML without transforms node" do
+    input_xml_file   = File.join(File.dirname(__FILE__), 'fixtures', 'input_2.xml')
+    cert_file        = File.join(File.dirname(__FILE__), 'fixtures', 'cert.pem')
+    private_key_file = File.join(File.dirname(__FILE__), 'fixtures', 'key.pem')
+
+    signer = Signer.new(File.read(input_xml_file))
+    signer.cert = OpenSSL::X509::Certificate.new(File.read(cert_file))
+    signer.private_key = OpenSSL::PKey::RSA.new(File.read(private_key_file), "test")
+    signer.security_node = signer.document.root
+    signer.security_token_id = ""
+    signer.ds_namespace_prefix = 'ds'
+
+    signer.digest!(signer.document.root, id: "", no_transform: true)
+    signer.sign!(issuer_serial: true)
+
+    expect(signer.document.at_xpath('//ds:Transforms', ds: Signer::DS_NAMESPACE)).to be_nil
   end
 
   it "should partially sign element and simple XML with custom DS namespace prefix when wss is false" do
@@ -176,12 +194,12 @@ describe Signer do
     signer.ds_namespace_prefix = 'ds'
 
     # partially sign element
-    signer.digest!(signer.document.root.children.first, :enveloped => true)
+    signer.digest!(signer.document.root.children.first, enveloped: true)
 
-    signer.digest!(signer.document.root, :id => "", :enveloped => true)
-    signer.sign!(:issuer_serial => true)
+    signer.digest!(signer.document.root, id: "", enveloped: true)
+    signer.sign!(issuer_serial: true)
 
-    # File.open(File.join(File.dirname(__FILE__), 'fixtures', 'output_2_with_ds_prefix.xml'), "w") do |f|
+    # File.open(File.join(File.dirname(__FILE__), 'fixtures', 'output_2_with_ds_prefix_and_wss_disabled.xml'), "w") do |f|
     #   f.write signer.document.to_s
     # end
     output_xml_file = File.join(File.dirname(__FILE__), 'fixtures', 'output_2_with_ds_prefix_and_wss_disabled.xml')
@@ -215,7 +233,7 @@ describe Signer do
                                 'fixtures',
                                 'output_4_with_nested_signatures_with_noblanks_disabled.xml')
 
-    signer.to_xml.should == Nokogiri::XML(File.read(output_xml_file)).to_xml(:save_with => 0)
+    signer.to_xml.should == Nokogiri::XML(File.read(output_xml_file)).to_xml(save_with: 0)
   end
 
   it "should digest and sign SOAP XML with X509Data inside SecurityTokenReference node" do
@@ -237,7 +255,7 @@ describe Signer do
                                 'fixtures',
                                 'output_5_with_security_token.xml')
 
-    signer.to_xml.should == Nokogiri::XML(File.read(output_xml_file), &:noblanks).to_xml(:save_with => 0)
+    signer.to_xml.should == Nokogiri::XML(File.read(output_xml_file), &:noblanks).to_xml(save_with: 0)
   end
 
   it "should digest and sign SOAP XML with X509Data" do
@@ -259,6 +277,6 @@ describe Signer do
                                 'fixtures',
                                 'output_5_with_x509_data.xml')
 
-    signer.to_xml.should == Nokogiri::XML(File.read(output_xml_file), &:noblanks).to_xml(:save_with => 0)
+    signer.to_xml.should == Nokogiri::XML(File.read(output_xml_file), &:noblanks).to_xml(save_with: 0)
   end
 end

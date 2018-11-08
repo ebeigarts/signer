@@ -11,21 +11,79 @@ class Signer
   attr_reader :cert
   attr_writer :security_node, :signature_node, :security_token_id
 
-  WSU_NAMESPACE = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd'
-  WSSE_NAMESPACE = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd'
-  DS_NAMESPACE = 'http://www.w3.org/2000/09/xmldsig#'
+  WSU_NAMESPACE = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd'.freeze
+  WSSE_NAMESPACE = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd'.freeze
+  DS_NAMESPACE = 'http://www.w3.org/2000/09/xmldsig#'.freeze
 
-  def initialize(document, noblanks: true, wss: true)
+  SIGNATURE_ALGORITHM = {
+    # SHA 1
+    sha1: {
+      id: 'http://www.w3.org/2001/04/xmlenc#sha1',
+      name: 'SHA1'
+    },
+    # SHA 256
+    sha256: {
+      id: 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256',
+      name: 'SHA256'
+    },
+    # SHA512
+    sha512: {
+      id: 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha512',
+      name: 'SHA512'
+    },
+    # GOST R 34-11 94
+    gostr3411: {
+      id: 'https://www.w3.org/2001/04/xmldsig-more#rsa-gostr3411',
+      name: 'GOST R 34.11-94'
+    }
+  }.freeze
+
+  CANONICALIZE_ALGORITHM = {
+    c14n_exec_1_0: {
+      name: 'c14n execlusive 1.0',
+      value: Nokogiri::XML::XML_C14N_EXCLUSIVE_1_0,
+      id: 'http://www.w3.org/2001/10/xml-exc-c14n#'
+    },
+    c14n_1_0: {
+      name: 'c14n 1.0',
+      value: Nokogiri::XML::XML_C14N_1_0,
+      id: 'http://www.w3.org/TR/2001/REC-xml-c14n-20010315'
+    },
+    c14n_1_1: {
+      name: 'c14n 1.1',
+      value: Nokogiri::XML::XML_C14N_1_1,
+      id: 'https://www.w3.org/TR/2008/REC-xml-c14n11-20080502/'
+    }
+  }.freeze
+
+  def initialize(document, noblanks: true, wss: true, canonicalize_algorithm: :c14n_exec_1_0)
     self.document = Nokogiri::XML(document.to_s) do |config|
       config.noblanks if noblanks
     end
     self.digest_algorithm = :sha1
     self.wss = wss
-    self.set_default_signature_method!
+    self.canonicalize_algorithm = canonicalize_algorithm
+    set_default_signature_method!
   end
 
   def to_xml
-    document.to_xml(:save_with => 0)
+    document.to_xml(save_with: 0)
+  end
+
+  def canonicalize_name
+    @canonicalize_algorithm[:name]
+  end
+
+  def canonicalize_id
+    @canonicalize_algorithm[:id]
+  end
+
+  def canonicalize_algorithm
+    @canonicalize_algorithm[:value]
+  end
+
+  def canonicalize_algorithm=(algorithm)
+    @canonicalize_algorithm = CANONICALIZE_ALGORITHM[algorithm]
   end
 
   # Return symbol name for supported digest algorithms and string name for custom ones.
@@ -50,6 +108,7 @@ class Signer
   # Allows to change digesting algorithm for signature creation. Same as +digest_algorithm=+
   def signature_digest_algorithm=(algorithm)
     @sign_digester = Signer::Digester.new(algorithm)
+    self.signature_algorithm_id = SIGNATURE_ALGORITHM[algorithm][:id]
   end
 
   # Receives certificate for signing and tries to guess a digest algorithm for signature creation.
@@ -76,8 +135,8 @@ class Signer
     @security_node ||= wss? ? document.xpath('//wsse:Security', wsse: WSSE_NAMESPACE).first : ''
   end
 
-  def canonicalize(node = document, inclusive_namespaces=nil)
-    node.canonicalize(Nokogiri::XML::XML_C14N_EXCLUSIVE_1_0, inclusive_namespaces, nil) # The last argument should be exactly +nil+ to remove comments from result
+  def canonicalize(node = document, inclusive_namespaces=nil, algorithm: canonicalize_algorithm)
+    node.canonicalize(algorithm, inclusive_namespaces, nil)
   end
 
   # <Signature xmlns="http://www.w3.org/2000/09/xmldsig#">
@@ -105,7 +164,7 @@ class Signer
       signature_node.add_child(node)
       set_namespace_for_node(node, DS_NAMESPACE, ds_namespace_prefix)
       canonicalization_method_node = Nokogiri::XML::Node.new('CanonicalizationMethod', document)
-      canonicalization_method_node['Algorithm'] = 'http://www.w3.org/2001/10/xml-exc-c14n#'
+      canonicalization_method_node['Algorithm'] = canonicalize_id
       node.add_child(canonicalization_method_node)
       set_namespace_for_node(canonicalization_method_node, DS_NAMESPACE, ds_namespace_prefix)
       signature_method_node = Nokogiri::XML::Node.new('SignatureMethod', document)
@@ -165,7 +224,7 @@ class Signer
   # </KeyInfo>
   def x509_data_node(issuer_in_security_token = false)
     issuer_name_node   = Nokogiri::XML::Node.new('X509IssuerName', document)
-    issuer_name_node.content = cert.issuer.to_s[1..-1].gsub(/\//, ',')
+    issuer_name_node.content = cert.issuer.to_s(OpenSSL::X509::Name::RFC2253)
 
     issuer_number_node = Nokogiri::XML::Node.new('X509SerialNumber', document)
     issuer_number_node.content = cert.serial
@@ -175,7 +234,7 @@ class Signer
     issuer_serial_node.add_child(issuer_number_node)
 
     cetificate_node    = Nokogiri::XML::Node.new('X509Certificate', document)
-    cetificate_node.content = Base64.encode64(cert.to_der).gsub("\n", '')
+    cetificate_node.content = Base64.encode64(cert.to_der).delete("\n")
 
     data_node          = Nokogiri::XML::Node.new('X509Data', document)
     data_node.add_child(issuer_serial_node)
@@ -210,6 +269,7 @@ class Signer
   # * [+:id+]                   Id for the node, if you don't want to use automatically calculated one
   # * [+:inclusive_namespaces+] Array of namespace prefixes which definitions should be added to node during canonicalization
   # * [+:enveloped+]
+  # * [+:ref_type+]             add `Type` attribute to Reference node, if ref_type is not nil
   #
   # Example of XML that will be inserted in message for call like <tt>digest!(node, inclusive_namespaces: ['soap'])</tt>:
   #
@@ -242,11 +302,13 @@ class Signer
 
     reference_node = Nokogiri::XML::Node.new('Reference', document)
     reference_node['URI'] = id.to_s.size > 0 ? "##{id}" : ""
+    reference_node['Type'] = options[:ref_type] if options[:ref_type]
+
     signed_info_node.add_child(reference_node)
     set_namespace_for_node(reference_node, DS_NAMESPACE, ds_namespace_prefix)
 
     transforms_node = Nokogiri::XML::Node.new('Transforms', document)
-    reference_node.add_child(transforms_node)
+    reference_node.add_child(transforms_node) unless options[:no_transform]
     set_namespace_for_node(transforms_node, DS_NAMESPACE, ds_namespace_prefix)
 
     transform_node = Nokogiri::XML::Node.new('Transform', document)
@@ -256,16 +318,19 @@ class Signer
     else
       transform_node['Algorithm'] = 'http://www.w3.org/2001/10/xml-exc-c14n#'
     end
+
     if options[:inclusive_namespaces]
       inclusive_namespaces_node = Nokogiri::XML::Node.new('ec:InclusiveNamespaces', document)
       inclusive_namespaces_node.add_namespace_definition('ec', transform_node['Algorithm'])
       inclusive_namespaces_node['PrefixList'] = options[:inclusive_namespaces].join(' ')
       transform_node.add_child(inclusive_namespaces_node)
     end
+
     transforms_node.add_child(transform_node)
 
     digest_method_node = Nokogiri::XML::Node.new('DigestMethod', document)
     digest_method_node['Algorithm'] = @digester.digest_id
+
     reference_node.add_child(digest_method_node)
     set_namespace_for_node(digest_method_node, DS_NAMESPACE, ds_namespace_prefix)
 
@@ -307,7 +372,7 @@ class Signer
     signed_info_canon = canonicalize(signed_info_node, options[:inclusive_namespaces])
 
     signature = private_key.sign(@sign_digester.digester, signed_info_canon)
-    signature_value_digest = Base64.encode64(signature).gsub("\n", '')
+    signature_value_digest = Base64.encode64(signature).delete("\n")
 
     signature_value_node = Nokogiri::XML::Node.new('SignatureValue', document)
     signature_value_node.content = signature_value_digest
