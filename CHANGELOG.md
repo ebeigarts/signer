@@ -1,3 +1,9 @@
+## 1.8.0 (2018-11-14)
+
+- Add parameter to customize canonicalize algorithm (#19, @pistachiology)
+- Add references node type on digest (for xades-bes signing properties) (#19, @pistachiology)
+- change issuer x509 content to be more standard way (#19, @pistachiology)
+
 ## 1.7.0 (2018-11-06)
 
 - Add wss option for XML only signing (#18, @pistachiology)
