@@ -132,15 +132,15 @@ class Signer
     @cert = certificate
     # Try to guess a digest algorithm for signature creation
     case @cert.signature_algorithm
-      when 'GOST R 34.11-94 with GOST R 34.10-2001'
-        self.signature_digest_algorithm = :gostr3411
-        self.signature_algorithm_id = 'http://www.w3.org/2001/04/xmldsig-more#gostr34102001-gostr3411'
-      when 'GOST R 34.11-2012 with GOST R 34.10-2012'
-        self.signature_digest_algorithm = :gostr34112012
-        self.signature_algorithm_id = 'urn:ietf:params:xml:ns:cpxmlsec:algorithms:gostr34102012-gostr34112012-256'
+    when 'GOST R 34.11-94 with GOST R 34.10-2001'
+      self.signature_digest_algorithm = :gostr3411
+      self.signature_algorithm_id = 'http://www.w3.org/2001/04/xmldsig-more#gostr34102001-gostr3411'
+    when 'GOST R 34.11-2012 with GOST R 34.10-2012'
+      self.signature_digest_algorithm = :gostr34112012
+      self.signature_algorithm_id = 'urn:ietf:params:xml:ns:cpxmlsec:algorithms:gostr34102012-gostr34112012-256'
       # Add clauses for other types of keys that require other digest algorithms and identifiers
-      else # most common 'sha1WithRSAEncryption' type included here
-        self.set_default_signature_method! # Reset any changes as they can become malformed
+    else # most common 'sha1WithRSAEncryption' type included here
+      self.set_default_signature_method! # Reset any changes as they can become malformed
     end
   end
 
@@ -152,12 +152,12 @@ class Signer
     @security_node ||= wss? ? document.xpath('//wsse:Security', wsse: WSSE_NAMESPACE).first : ''
   end
 
-  def canonicalize(node = document, inclusive_namespaces=nil, algorithm: canonicalize_algorithm)
+  def canonicalize(node = document, inclusive_namespaces=nil, algorithm: canonicalize_algorithm, smev3_transform: false)
     xml = node.canonicalize(algorithm, inclusive_namespaces, nil)
 
     # add additional transform for SMEV 3
-    if canonicalize_algorithm == SMEV_GOV_RU
-      xml = XMLNormalizer.new(xml).remove_processing_instructions.remove_unsed_prefixes.to_s
+    if smev3_transform
+      xml = XMLNormalizer.new(xml).remove_processing_instructions.remove_spaces_characters.remove_unsed_prefixes.to_s.strip
     end
 
     xml
@@ -294,6 +294,7 @@ class Signer
   # * [+:inclusive_namespaces+] Array of namespace prefixes which definitions should be added to node during canonicalization
   # * [+:enveloped+]
   # * [+:ref_type+]             add `Type` attribute to Reference node, if ref_type is not nil
+  # * [+:smev3_transform+]      add `urn://smev-gov-ru/xmldsig/transform` transform
   #
   # Example of XML that will be inserted in message for call like <tt>digest!(node, inclusive_namespaces: ['soap'])</tt>:
   #
@@ -320,10 +321,10 @@ class Signer
       id = options[:id] || "_#{Digest::SHA1.hexdigest(target_node.to_s)}"
       target_node['Id'] = id.to_s unless id.empty?
     else
-      id = target_node['Id']
+      id = options[:id] || target_node['Id']
     end
 
-    target_canon = canonicalize(target_node, options[:inclusive_namespaces])
+    target_canon = canonicalize(target_node, options[:inclusive_namespaces], smev3_transform: options[:smev3_transform])
     target_digest = Base64.encode64(@digester.digest(target_canon)).strip
 
     reference_node = Nokogiri::XML::Node.new('Reference', document)
@@ -355,10 +356,10 @@ class Signer
     transforms_node.add_child(transform_node)
 
     # add additional transform for SMEV 3
-    if canonicalize_algorithm == SMEV_GOV_RU
+    if options[:smev3_transform]
       transform_node = Nokogiri::XML::Node.new('Transform', document)
       set_namespace_for_node(transform_node, DS_NAMESPACE, ds_namespace_prefix)
-      transform_node['Algorithm'] = canonicalize_id
+      transform_node['Algorithm'] = 'urn://smev-gov-ru/xmldsig/transform'
 
       transforms_node.add_child(transform_node)
     end
