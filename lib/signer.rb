@@ -17,8 +17,6 @@ class Signer
   WSSE_NAMESPACE = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd'.freeze
   DS_NAMESPACE = 'http://www.w3.org/2000/09/xmldsig#'.freeze
 
-  SMEV_GOV_RU = -1
-
   SIGNATURE_ALGORITHM = {
     # SHA 1
     sha1: {
@@ -63,11 +61,6 @@ class Signer
       value: Nokogiri::XML::XML_C14N_1_1,
       id: 'https://www.w3.org/TR/2008/REC-xml-c14n11-20080502/'
     },
-    smev_gov_ru: {
-      name: 'SMEV GOV RU',
-      value: SMEV_GOV_RU,
-      id: 'urn://smev-gov-ru/xmldsig/transform'
-    }
   }.freeze
 
   def initialize(document, noblanks: true, wss: true, canonicalize_algorithm: :c14n_exec_1_0)
