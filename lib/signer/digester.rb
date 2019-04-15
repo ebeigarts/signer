@@ -28,6 +28,12 @@ class Signer
       id: 'http://www.w3.org/2001/04/xmldsig-more#gostr3411',
       digester: lambda { OpenSSL::Digest.new('md_gost94') },
     },
+    # GOST R 34-11 2012 256 bit
+    gostr34112012_256: {
+      name: 'GOST R 34.11-2012 256',
+      id: 'urn:ietf:params:xml:ns:cpxmlsec:algorithms:gostr34112012-256',
+      digester: lambda { begin OpenSSL::Digest.new('streebog256') rescue OpenSSL::Digest.new('md_gost12_256') end },
+    },
   }.freeze
 
   # Class that holds +OpenSSL::Digest+ instance with some meta information for digesting in XML.
