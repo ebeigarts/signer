@@ -18,7 +18,7 @@ class Signer
   SIGNATURE_ALGORITHM = {
     # SHA 1
     sha1: {
-      id: 'http://www.w3.org/2001/04/xmlenc#sha1',
+      id: 'http://www.w3.org/2000/09/xmldsig#rsa-sha1',
       name: 'SHA1'
     },
     # SHA 256
@@ -33,9 +33,14 @@ class Signer
     },
     # GOST R 34-11 94
     gostr3411: {
-      id: 'https://www.w3.org/2001/04/xmldsig-more#rsa-gostr3411',
+      id: 'http://www.w3.org/2001/04/xmldsig-more#gostr34102001-gostr3411',
       name: 'GOST R 34.11-94'
-    }
+    },
+    # GOST R 34-11 2012 256 bit
+    gostr34112012_256: {
+      id: 'urn:ietf:params:xml:ns:cpxmlsec:algorithms:gostr34102012-gostr34112012-256',
+      name: 'GOST R 34.11-2012 256',
+    },
   }.freeze
 
   CANONICALIZE_ALGORITHM = {
@@ -63,7 +68,7 @@ class Signer
     self.digest_algorithm = :sha1
     self.wss = wss
     self.canonicalize_algorithm = canonicalize_algorithm
-    set_default_signature_method!
+    self.signature_digest_algorithm = :sha1
   end
 
   def to_xml
@@ -118,12 +123,8 @@ class Signer
     @cert = certificate
     # Try to guess a digest algorithm for signature creation
     case @cert.signature_algorithm
-      when 'GOST R 34.11-94 with GOST R 34.10-2001'
-        self.signature_digest_algorithm = :gostr3411
-        self.signature_algorithm_id = 'http://www.w3.org/2001/04/xmldsig-more#gostr34102001-gostr3411'
-      # Add clauses for other types of keys that require other digest algorithms and identifiers
-      else # most common 'sha1WithRSAEncryption' type included here
-        self.set_default_signature_method! # Reset any changes as they can become malformed
+    when 'GOST R 34.11-94 with GOST R 34.10-2001'
+      self.signature_digest_algorithm = :gostr3411
     end
   end
 
@@ -286,7 +287,7 @@ class Signer
   def digest!(target_node, options = {})
     if wss?
       wsu_ns = namespace_prefix(target_node, WSU_NAMESPACE)
-      current_id = target_node["#{wsu_ns}:Id"]  if wsu_ns
+      current_id = target_node["#{wsu_ns}:Id"] if wsu_ns
       id = options[:id] || current_id || "_#{Digest::SHA1.hexdigest(target_node.to_s)}"
       unless id.to_s.empty?
         wsu_ns ||= namespace_prefix(target_node, WSU_NAMESPACE, 'wsu')
@@ -295,6 +296,8 @@ class Signer
     elsif target_node['Id'].nil?
       id = options[:id] || "_#{Digest::SHA1.hexdigest(target_node.to_s)}"
       target_node['Id'] = id.to_s unless id.empty?
+    else
+      id = options[:id] || target_node['Id']
     end
 
     target_canon = canonicalize(target_node, options[:inclusive_namespaces])
@@ -311,22 +314,8 @@ class Signer
     reference_node.add_child(transforms_node) unless options[:no_transform]
     set_namespace_for_node(transforms_node, DS_NAMESPACE, ds_namespace_prefix)
 
-    transform_node = Nokogiri::XML::Node.new('Transform', document)
-    set_namespace_for_node(transform_node, DS_NAMESPACE, ds_namespace_prefix)
-    if options[:enveloped]
-      transform_node['Algorithm'] = 'http://www.w3.org/2000/09/xmldsig#enveloped-signature'
-    else
-      transform_node['Algorithm'] = 'http://www.w3.org/2001/10/xml-exc-c14n#'
-    end
-
-    if options[:inclusive_namespaces]
-      inclusive_namespaces_node = Nokogiri::XML::Node.new('ec:InclusiveNamespaces', document)
-      inclusive_namespaces_node.add_namespace_definition('ec', transform_node['Algorithm'])
-      inclusive_namespaces_node['PrefixList'] = options[:inclusive_namespaces].join(' ')
-      transform_node.add_child(inclusive_namespaces_node)
-    end
-
-    transforms_node.add_child(transform_node)
+    # create reference + transforms node
+    transform!(transforms_node, options)
 
     digest_method_node = Nokogiri::XML::Node.new('DigestMethod', document)
     digest_method_node['Algorithm'] = @digester.digest_id
@@ -383,15 +372,29 @@ class Signer
 
   protected
 
+  # Create transform nodes
+  def transform!(transforms_node, options)
+    transform_node = Nokogiri::XML::Node.new('Transform', document)
+    set_namespace_for_node(transform_node, DS_NAMESPACE, ds_namespace_prefix)
+    if options[:enveloped]
+      transform_node['Algorithm'] = 'http://www.w3.org/2000/09/xmldsig#enveloped-signature'
+    else
+      transform_node['Algorithm'] = 'http://www.w3.org/2001/10/xml-exc-c14n#'
+    end
+
+    if options[:inclusive_namespaces]
+      inclusive_namespaces_node = Nokogiri::XML::Node.new('ec:InclusiveNamespaces', document)
+      inclusive_namespaces_node.add_namespace_definition('ec', transform_node['Algorithm'])
+      inclusive_namespaces_node['PrefixList'] = options[:inclusive_namespaces].join(' ')
+      transform_node.add_child(inclusive_namespaces_node)
+    end
+
+    transforms_node.add_child(transform_node)
+  end
+
   # Check are we using ws security?
   def wss?
     wss
-  end
-
-  # Reset digest algorithm for signature creation and signature algorithm identifier
-  def set_default_signature_method!
-    self.signature_digest_algorithm = :sha1
-    self.signature_algorithm_id = 'http://www.w3.org/2000/09/xmldsig#rsa-sha1'
   end
 
   ##
