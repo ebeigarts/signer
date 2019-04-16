@@ -1,3 +1,7 @@
+## 1.9.0 (2019-04-16)
+
+- Refactor digest!() method for better extensibility, add GOST-R 34.10/11-2012 algorithms, fix digest node ID reference, cleanup (#22, @netcitylife)
+
 ## 1.8.0 (2018-11-14)
 
 - Add parameter to customize canonicalize algorithm (#19, @pistachiology)
