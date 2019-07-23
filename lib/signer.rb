@@ -270,6 +270,7 @@ class Signer
   # * [+:id+]                   Id for the node, if you don't want to use automatically calculated one
   # * [+:inclusive_namespaces+] Array of namespace prefixes which definitions should be added to node during canonicalization
   # * [+:enveloped+]
+  # * [+:enveloped_legacy+]     add solely `enveloped-signature` in `Transforms` with :enveloped:.
   # * [+:ref_type+]             add `Type` attribute to Reference node, if ref_type is not nil
   #
   # Example of XML that will be inserted in message for call like <tt>digest!(node, inclusive_namespaces: ['soap'])</tt>:
@@ -373,14 +374,10 @@ class Signer
   protected
 
   # Create transform nodes
-  def transform!(transforms_node, options)
+  def transform_node(algorithm, options)
     transform_node = Nokogiri::XML::Node.new('Transform', document)
     set_namespace_for_node(transform_node, DS_NAMESPACE, ds_namespace_prefix)
-    if options[:enveloped]
-      transform_node['Algorithm'] = 'http://www.w3.org/2000/09/xmldsig#enveloped-signature'
-    else
-      transform_node['Algorithm'] = 'http://www.w3.org/2001/10/xml-exc-c14n#'
-    end
+    transform_node['Algorithm'] = algorithm
 
     if options[:inclusive_namespaces]
       inclusive_namespaces_node = Nokogiri::XML::Node.new('ec:InclusiveNamespaces', document)
@@ -389,7 +386,22 @@ class Signer
       transform_node.add_child(inclusive_namespaces_node)
     end
 
-    transforms_node.add_child(transform_node)
+    transform_node
+  end
+
+  def transform!(transforms_node, options)
+    # With PR-26, a new flag :enveloped_legacy is introduced for backward compatibility, the logics are:
+    # - :enveloped is false, include xml-exc-c14n
+    # - :enveloped is true, include xml-exc-c14n and enveloped-signature
+    # - :enveloped is true and :enveloped_legacy is true, include enveloped-signature.
+
+    if options[:enveloped] && options[:enveloped_legacy]
+      transforms_node.add_child(transform_node('http://www.w3.org/2000/09/xmldsig#enveloped-signature', options))
+      return
+    end
+
+    transforms_node.add_child(transform_node('http://www.w3.org/2001/10/xml-exc-c14n#', options))
+    transforms_node.add_child(transform_node('http://www.w3.org/2000/09/xmldsig#enveloped-signature', options)) if options[:enveloped]
   end
 
   # Check are we using ws security?
