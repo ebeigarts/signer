@@ -196,6 +196,7 @@ class Signer
       node['EncodingType'] = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary'
       node.content = Base64.encode64(cert.to_der).gsub("\n", '')
       signature_node.add_previous_sibling(node)
+      set_namespace_for_node(node, WSSE_NAMESPACE, ds_namespace_prefix)
       wsse_ns = namespace_prefix(node, WSSE_NAMESPACE, 'wsse')
       wsu_ns = namespace_prefix(node, WSU_NAMESPACE, 'wsu')
       node["#{wsu_ns}:Id"] = security_token_id
