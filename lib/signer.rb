@@ -65,6 +65,7 @@ class Signer
     self.document = Nokogiri::XML(document.to_s) do |config|
       config.noblanks if noblanks
     end
+    self.document.namespace_inheritance = true if self.document.respond_to?(:namespace_inheritance)
     self.digest_algorithm = :sha1
     self.wss = wss
     self.canonicalize_algorithm = canonicalize_algorithm
