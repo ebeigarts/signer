@@ -21,5 +21,5 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency 'rake'
   gem.add_development_dependency 'rspec'
 
-  gem.add_runtime_dependency 'nokogiri', '>= 1.5.1'
+    gem.add_runtime_dependency 'nokogiri', '>= 1.5.1', '!=1.12.3', '!=1.12.2', '!=1.12.1', '!=1.12.0'
 end
