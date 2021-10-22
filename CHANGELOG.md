@@ -1,3 +1,8 @@
+## 1.10.0 (2021-10-22)
+
+- Ensure compatibility with Nokogiri 1.12.4+ (#31, @flavorjones)
+- fix #26: add xml-exc-c14n Transform when :enveloped option is true. (#27, @kunxi)
+
 ## 1.9.0 (2019-04-16)
 
 - Refactor digest!() method for better extensibility, add GOST-R 34.10/11-2012 algorithms, fix digest node ID reference, cleanup (#22, @netcitylife)
